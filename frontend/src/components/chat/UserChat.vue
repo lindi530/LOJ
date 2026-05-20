@@ -44,7 +44,7 @@ const store = useStore()
 const { messageMap, followedUsers, selectedUserId, sendMessage } = useWebSocketContext()
 
 const userId = computed(() => String(store.getters['user/userId']))
-const userAvatar = computed(() => store.getters['user/userAvatar'] || '/default-avatar.png')
+const userAvatar = computed(() => store.getters['user/userAvatar'] || '/default-avatar.svg')
 
 
 

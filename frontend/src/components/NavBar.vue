@@ -6,22 +6,26 @@
     resizable
   >
     <n-drawer-content title="聊天" style="height: 100%; overflow: auto;">
-      <ChatAPP/>
+      <ChatAPP />
     </n-drawer-content>
   </n-drawer>
-  <SaberAPP v-model:visible="saberVisible" class="saber-fix"/>
-  <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-gradient shadow-sm py-2"
-    style="background-color: #493131;">
 
+  <SaberAPP v-model:visible="saberVisible" class="saber-fix" />
+
+  <nav
+    class="navbar navbar-expand-md navbar-dark fixed-top bg-gradient shadow-sm py-2"
+    style="background-color: #493131;"
+  >
     <div class="container">
       <RouterLink class="navbar-brand fw-bold fs-4" to="/">My Blog</RouterLink>
+
       <button class="navbar-toggler" @click="isOpen = !isOpen" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" :class="{ show: isOpen }">
         <ul class="navbar-nav me-auto mb-0">
-          <li v-for="item in leftLinks" :key="item.to" class="nav-item">
+          <li v-for="item in leftLinks" :key="item.label" class="nav-item">
             <button type="button" class="nav-link btn btn-link px-3" @click="handleLinkClick(item)">
               {{ item.label }}
             </button>
@@ -38,7 +42,7 @@
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                <img :src="userAvatar" alt="Avatar" class="rounded-circle me-2" width="28" height="28" />
+                <img :src="userAvatar" alt="Avatar" class="rounded-circle me-2" width="28" height="28">
                 {{ userName }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end shadow animated-dropdown">
@@ -52,7 +56,7 @@
                     <i class="bi bi-gear me-2"></i> 设置
                   </RouterLink>
                 </li>
-                <li><hr class="dropdown-divider" /></li>
+                <li><hr class="dropdown-divider"></li>
                 <li>
                   <a class="dropdown-item text-danger" href="#" @click.prevent="logout">
                     <i class="bi bi-box-arrow-right me-2"></i> 登出
@@ -61,6 +65,7 @@
               </ul>
             </li>
           </template>
+
           <template v-else>
             <li class="nav-item">
               <a href="#" class="nav-link px-3" @click.prevent="loginVisible = true">登录</a>
@@ -79,105 +84,101 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
-import { useStore } from 'vuex';
+import { ref, computed, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 import { closeWebSocket } from '@/composables/useWebSocket'
-import LoginModal from './account/LoginModal.vue';
-import RegisterModal from './account/RegisterModal.vue';
+import LoginModal from './account/LoginModal.vue'
+import RegisterModal from './account/RegisterModal.vue'
 import ChatAPP from '@/views/UserChatView.vue'
 import SaberAPP from './saber/Interface.vue'
-import UserList from './list/UserList.vue';
-import api from '@/api';
+import api from '@/api'
 
-const router = useRouter();
-const store = useStore();
+const router = useRouter()
+const store = useStore()
 
-const isOpen = ref(false);
-const loginVisible = ref(false);
-const registerVisible = ref(false);
-const chatVisible = ref(false);
-const placement = ref("right")
+const isOpen = ref(false)
+const loginVisible = ref(false)
+const registerVisible = ref(false)
+const chatVisible = ref(false)
+const placement = ref('right')
 const saberVisible = ref(false)
-const pendingRoute = ref(null);
+const pendingRoute = ref(null)
 
+const refreshToken = computed(() => store.getters['user/refreshToken'] || localStorage.refreshToken)
+const isLogin = computed(() => store.getters['user/isLogin'])
+const userName = computed(() => store.getters['user/userName'])
+const userId = computed(() => store.getters['user/userId'])
+const userAvatar = computed(() => store.getters['user/userAvatar'] || '/default-avatar.svg')
 
-
-const refreshToken = computed(() => store.getters['user/refreshToken'] || localStorage.refreshToken);
-const accessToken = computed(() => store.getters['user/accessToken']);
-const isLogin = computed(() => store.getters['user/isLogin']);
-const userName = computed(() => store.getters['user/userName']);
-const userId = computed(() => store.getters['user/userId']);
-const userAvatar = computed(() => store.getters['user/userAvatar'] || '/default-avatar.png');
-console.log("loginUserId: ", userId)
 const leftLinks = computed(() => [
-  { label: '首页', to: '/' },
-  { label: '帖子列表', to: '/posts' },  
+  { label: '帖子', to: '/' },
   { label: '用户信息', to: '/user-info' },
   { label: '用户列表', to: '/users/userList' },
   { label: '聊天', to: '/users/chat' },
   { label: '题库', to: '/problems' },
   { label: '对战', to: '/' },
-  { label: '题目上传', to: '/upload/problem'},
-  { label: '测试', to: '/test'}
-]);
+  { label: '题目上传', to: '/upload/problem' },
+  { label: '测试', to: '/test' }
+])
 
 function handleLinkClick(item) {
-  switch (item.label) { 
-    case "用户信息":
+  isOpen.value = false
+
+  switch (item.label) {
+    case '用户信息':
       if (isLogin.value && userId.value) {
-        router.push(`/users/${userId.value}`);
+        router.push(`/users/${userId.value}`)
       } else {
-        loginVisible.value = true;
-        pendingRoute.value = `/users/${userId.value}`;
+        loginVisible.value = true
+        pendingRoute.value = 'user-profile'
       }
       break
-    case "聊天": 
-      chatVisible.value = true;
+    case '聊天':
+      chatVisible.value = true
       break
     case '对战':
-      saberVisible.value = true;
+      saberVisible.value = true
       break
     default:
-      router.push(item.to);
+      router.push(item.to)
       break
   }
 }
 
 async function logout() {
   try {
-    const resp = await api.logout({ refresh_token: refreshToken.value });
-    
-    if (resp.code === 0) {
-      store.commit('user/SET_ACCESSTOKEN', '');
-      store.commit('user/SET_REFRESHTOKEN', '');
-      store.commit('user/SET_PROFILE', {});
-      store.commit('user/LOGOUT');
+    const resp = await api.logout({ refresh_token: refreshToken.value })
 
-      closeWebSocket();
+    if (resp.code === 0) {
+      store.commit('user/SET_ACCESSTOKEN', '')
+      store.commit('user/SET_REFRESHTOKEN', '')
+      store.commit('user/SET_PROFILE', {})
+      store.commit('user/LOGOUT')
+      closeWebSocket()
     }
   } catch (err) {
-    console.error("登出失败：", err);
+    console.error('登出失败：', err)
   }
 }
 
 function handleLoginSuccess() {
-  loginVisible.value = false;
+  loginVisible.value = false
   nextTick(() => {
-    if (pendingRoute.value && userId.value) {
-      router.push(`/users/${userId.value}`);
-      pendingRoute.value = null;
+    if (pendingRoute.value === 'user-profile' && userId.value) {
+      router.push(`/users/${userId.value}`)
+      pendingRoute.value = null
     }
-  });
+  })
 }
 </script>
 
 <style scoped>
 .user-menu {
-  text-decoration: none !important;
   display: flex;
   align-items: center;
   font-weight: 500;
+  text-decoration: none !important;
 }
 
 .animated-dropdown {
@@ -215,7 +216,6 @@ function handleLoginSuccess() {
   }
 }
 
-/* 关键修复：确保Saber组件的按钮不受父组件样式影响 */
 :deep(.saber-fix) {
   position: relative;
   z-index: 9999 !important;

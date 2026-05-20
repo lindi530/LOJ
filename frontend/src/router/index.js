@@ -1,7 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
-
-import HomeView from '../views/HomeView.vue'
 import PostsView from '../views/PostsListView.vue'
 import UsersView from '../views/UsersProfileView.vue'
 import NotFound from '@/components/NotFound.vue'
@@ -19,7 +17,7 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: HomeView
+    component: PostsView
   },
   {
     path: '/posts',
@@ -35,7 +33,7 @@ const routes = [
     path: '/users/chat',
     name: 'Chat',
     component: Chat,
-    meta: { requiresAuth: true }   // 需要登录
+    meta: { requiresAuth: true }
   },
   {
     path: '/users/:userId',
@@ -56,35 +54,34 @@ const routes = [
   {
     path: '/problems',
     name: 'Problem',
-    component: Problem,
+    component: Problem
   },
   {
     path: '/problems/:problem_id',
     name: 'ProblemDetail',
-    component: ProblemDetail,
+    component: ProblemDetail
   },
   {
     path: '/problems/submissions/:submission_id',
     name: 'SubmissionDetail',
-    component: SubmissionDetail,
+    component: SubmissionDetail
   },
   {
     path: '/upload/problem',
     name: 'ProblemUpload',
-    component: ProblemUpload,
+    component: ProblemUpload
   },
   {
     path: '/test',
     name: 'test',
     component: Test,
-    meta: { requiresAuth: true }   // 需要登录
+    meta: { requiresAuth: true }
   },
   {
     path: '/404',
     name: '404',
     component: NotFound
   },
-  
   { path: '/:pathMatch(.*)*', redirect: '/404' }
 ]
 
@@ -92,17 +89,5 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes
 })
-
-// 全局前置守卫
-// router.beforeEach((to, from, next) => {
-//   const auth = useAuthStore()
-
-//   if (to.meta.requiresAuth && !auth.token) {
-//     auth.showLoginDialog()   // 打开弹窗
-//     next(false)              // 阻止跳转
-//   } else {
-//     next()
-//   }
-// })
 
 export default router
