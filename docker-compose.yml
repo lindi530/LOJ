@@ -73,6 +73,8 @@ services:
       - --default-time-zone=+08:00
     volumes:
       - mysql_data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3307:3306"
     expose:
       - "3306"
     healthcheck:
@@ -89,6 +91,8 @@ services:
     command: [ "redis-server", "--appendonly", "yes" ]
     volumes:
       - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
     expose:
       - "6379"
     healthcheck:
@@ -107,6 +111,9 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "127.0.0.1:5673:5672"
+      - "127.0.0.1:15673:15672"
     expose:
       - "5672"
       - "15672"

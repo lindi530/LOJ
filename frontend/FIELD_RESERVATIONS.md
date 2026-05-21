@@ -72,13 +72,61 @@
 }
 ```
 
+## 用户主页提交记录
+
+涉及前端位置：
+
+- 用户主页内的提交记录 Tab：`/users/:userId`
+
+涉及接口链接：
+
+| 前端场景 | API 方法 | 接口链接 | 使用组件 |
+| --- | --- | --- | --- |
+| 用户主页提交记录 | `api.getUserSubmissionList(userId, page, pageSize)` | `GET /users/{userId}/submissions?page={page}&page_size={pageSize}` | `src/components/coding/SubmissionSimple.vue` |
+
+接口返回的每一条提交数据会传给 `SubmissionSimple.vue` 的 `submission` 属性。以下字段已在前端做兼容预留：
+
+| 字段路径 | 兼容字段名 | 用途 | 显示位置 | 缺失时表现 |
+| --- | --- | --- | --- | --- |
+| `submission.state` | `submission.status`、`submission.result` | 运行结果，如答案正确、答案错误、编译错误 | 提交记录表格的“运行结果”列 | 如果有 `score`，按分数兜底显示；否则显示“查看详情” |
+| `submission.language` | `submission.lang` | 使用语言，如 `C++`、`Go`、`Java` | 提交记录表格的“使用语言”列 | 显示 `-` |
+| `submission.exec_time` | `submission.execTime`、`submission.runtime` | 运行时间，单位 ms | 提交记录表格的“运行时间(ms)”列 | 显示 `-` |
+| `submission.memory_usage` | `submission.memoryUsage`、`submission.memory` | 使用内存，单位 KB | 提交记录表格的“使用内存(KB)”列 | 显示 `-` |
+| `submission.code_length` | `submission.codeLength` | 代码长度 | 提交记录表格的“代码长度”列 | 如果有 `code`，用 `code.length` 计算；否则显示 `-` |
+| `submission.score` | - | 分数 / 判题得分 | 不单独显示，用作运行结果兜底判断 | 不参与兜底 |
+
+说明：
+
+- 题目列只显示 `submission.title`，不显示题号；`submission.problem_id` 仍用于点击题目名跳转题目详情页。
+- 运行结果字段会把常见英文状态映射成中文展示，例如 `accepted` / `ac` 显示为“答案正确”，`wrong_answer` / `wa` 显示为“答案错误”。
+- 如果后端没有返回运行结果、运行时间、内存或语言，前端会保留表格结构并显示 `-`，方便识别是数据缺失而不是布局问题。
+
+推荐后端返回结构：
+
+```json
+{
+  "id": 83652351,
+  "problem_id": 1001,
+  "title": "Two Sum",
+  "state": "accepted",
+  "language": "C++",
+  "exec_time": 1563,
+  "memory_usage": 81244,
+  "score": 100,
+  "code": "int main(){return 0;}",
+  "created_at": "2026-05-20T19:15:46+08:00"
+}
+```
+
 ## 当前实现位置
 
 字段读取逻辑集中在：
 
 - `src/components/post/PostSimple.vue`
+- `src/components/coding/SubmissionSimple.vue`
 
 字段消费页面：
 
 - `src/views/PostsListView.vue`
 - `src/components/profile/UserPosts.vue`
+- `src/components/profile/UserSubmissions.vue`

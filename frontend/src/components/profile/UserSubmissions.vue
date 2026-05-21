@@ -1,13 +1,26 @@
 <template>
-  <div v-if="submissions.length">
-    <SubmissionSimple
-      v-for="submission in submissions"
-      :author="author"
-      :key="submission.submission_id"
-      :submission="submission"
-    />
+  <div v-if="submissions.length" class="submission-table">
+    <div class="submission-head">
+      <span>运行ID</span>
+      <span>题目</span>
+      <span>运行结果</span>
+      <span>运行时间(ms)</span>
+      <span>使用内存(KB)</span>
+      <span>代码长度</span>
+      <span>使用语言</span>
+      <span>提交时间</span>
+    </div>
+
+    <div class="submission-list">
+      <SubmissionSimple
+        v-for="submission in submissions"
+        :author="author"
+        :key="submission.submission_id || submission.id"
+        :submission="submission"
+      />
+    </div>
   </div>
-  <p v-else class="text-muted">还没有任何提交记录</p>
+  <p v-else class="empty-text">还没有任何提交记录</p>
 
   <n-space vertical class="vertical-space">
     <n-pagination
@@ -64,8 +77,50 @@ onMounted(fetchSubmissions);
 </script>
 
 <style scoped>
+.submission-table {
+  overflow-x: auto;
+  border: 1px solid #e6e9ee;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.submission-head {
+  display: grid;
+  min-width: 780px;
+  grid-template-columns: 72px minmax(112px, 1.25fr) 88px 92px 94px 72px 78px 150px;
+  align-items: center;
+  gap: 0;
+  padding: 0 16px;
+  background: #f3f4f6;
+  color: #6f7782;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 48px;
+}
+
+.empty-text {
+  margin: 24px 0;
+  color: #8a939d;
+  text-align: center;
+}
+
 .vertical-space {
   align-items: center;
-  margin-top: auto;
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .submission-table {
+    border: 0;
+    background: transparent;
+  }
+
+  .submission-head {
+    display: none;
+  }
+
+  .submission-list {
+    overflow-x: visible;
+  }
 }
 </style>

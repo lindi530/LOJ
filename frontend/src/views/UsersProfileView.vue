@@ -1,33 +1,33 @@
 <template>
-  <div class="container my-4">
-    <!-- 上半部分的 row -->
-    <div class="row">
+  <div class="profile-page">
+    <div class="profile-shell">
       <UserProfileInfo :user="user"/>
-      <n-card class="col-md-9 mb-4">
-        <n-tabs type="line" animated>
-          <n-tab-pane name="posts" tab="帖子">
-            <UserPosts 
-              :update-posts="updatePosts"
-              :user-id="userId"
-              @post-deleted="handlePostDeleted"
-              @update-state="updateState"
-            />
-          </n-tab-pane>
-          <n-tab-pane name="submissions" tab="提交记录">
-            <UserSubmissions 
-              :author="user"
-            />
-          </n-tab-pane>
-        </n-tabs>
-      </n-card>
-    </div>
 
-    <!-- 下半部分也放入 row，并使用相同的栅格列（如 col-md-9） -->
-    <div class="row">
+      <main class="profile-main">
+        <n-card class="activity-card" :bordered="false">
+          <n-tabs type="line" class="profile-tabs">
+            <n-tab-pane name="posts" tab="帖子">
+              <UserPosts
+                :update-posts="updatePosts"
+                :user-id="userId"
+                @post-deleted="handlePostDeleted"
+                @update-state="updateState"
+              />
+            </n-tab-pane>
+            <n-tab-pane name="submissions" tab="提交记录">
+              <UserSubmissions
+                :author="user"
+              />
+            </n-tab-pane>
+          </n-tabs>
+        </n-card>
+
         <NewPostForm
           v-if="canCreatePost"
+          class="new-post-panel"
           @update-state="updateState"
         />
+      </main>
     </div>
   </div>
 </template>
@@ -62,8 +62,8 @@ function updateState(val) {
   updatePosts.value = val
 }
 
-function handlePostDeleted(deletedPostId) {
-  posts.value = posts.value.filter(post => post.id !== deletedPostId);
+function handlePostDeleted() {
+  updatePosts.value = true;
 }
 
 onMounted(async () => {
@@ -106,9 +106,80 @@ const loadUserProfile = async () => {
 </script>
 
 <style scoped>
-.text-truncate {
+.profile-page {
+  min-height: calc(100vh - 60px);
+  padding: 28px 0 56px;
+  background: rgba(247, 248, 250, 0.96);
+}
+
+.profile-shell {
+  display: grid;
+  grid-template-columns: minmax(240px, 286px) minmax(0, 1fr);
+  gap: 22px;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  align-items: start;
+}
+
+.profile-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.activity-card,
+.new-post-panel {
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
+}
+
+:deep(.activity-card > .n-card__content) {
+  padding: 0;
+}
+
+:deep(.profile-tabs .n-tabs-nav) {
+  padding: 10px 24px 0;
+}
+
+:deep(.profile-tabs .n-tab-pane) {
+  padding: 10px 24px 24px;
+}
+
+:deep(.profile-tabs .n-tabs-tab) {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+:deep(.new-post-panel > .n-card__content) {
+  padding: 22px 24px 24px;
+}
+
+@media (max-width: 900px) {
+  .profile-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .profile-page {
+    padding: 18px 0 36px;
+  }
+
+  .profile-shell {
+    width: min(100% - 20px, 1180px);
+    gap: 14px;
+  }
+
+  :deep(.profile-tabs .n-tabs-nav) {
+    padding: 0 16px;
+  }
+
+  :deep(.profile-tabs .n-tab-pane) {
+    padding: 8px 16px 18px;
+  }
 }
 </style>

@@ -8,7 +8,7 @@ import (
 func GetUserSubmissionList(submissions *[]problem_submission_model.UserSubmission, userId int64, offset, limit int) error {
 	err := global.DB.
 		Table("problem_submissions AS s").
-		Select("s.id, s.code, s.created_at, s.problem_id, p.title").
+		Select("s.id, s.code, s.created_at, s.problem_id, s.language, s.state, s.exec_time, s.memory_usage, s.score, p.title").
 		Joins("LEFT JOIN problems p ON s.problem_id = p.id").
 		Where("s.user_id = ?", userId).
 		Order("id desc"). // 按 id 降序，最新的排前面
