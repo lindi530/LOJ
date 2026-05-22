@@ -3,6 +3,7 @@ package routers
 import (
 	"GO1/api"
 	"GO1/middlewares/jwt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,6 +12,7 @@ func PostsRouter(router *gin.RouterGroup) {
 	posts.GET("/:post_id/comments", api.ApiGroups.PostAPI.GetComments)
 	posts.Use(jwt.JWTAuthMiddleware())
 	{
+		posts.GET("/cursor_page", api.ApiGroups.PostAPI.GetNextCursorPosts)
 		posts.GET("/page", api.ApiGroups.PostAPI.GetThePagePost)
 		posts.GET("/:post_id", api.ApiGroups.PostAPI.GetOnePost)
 		posts.GET("", api.ApiGroups.PostAPI.GetAllPost)

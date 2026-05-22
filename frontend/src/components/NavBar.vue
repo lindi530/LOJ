@@ -100,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { closeWebSocket } from '@/composables/useWebSocket'
@@ -119,7 +119,6 @@ const registerVisible = ref(false)
 const chatVisible = ref(false)
 const placement = ref('right')
 const saberVisible = ref(false)
-const pendingRoute = ref(null)
 
 const refreshToken = computed(() => store.getters['user/refreshToken'] || localStorage.refreshToken)
 const isLogin = computed(() => store.getters['user/isLogin'])
@@ -129,7 +128,6 @@ const userAvatar = computed(() => store.getters['user/userAvatar'] || '/default-
 
 const leftLinks = computed(() => [
   { label: '帖子', to: '/' },
-  { label: '用户信息', to: '/user-info' },
   { label: '用户列表', to: '/users/userList' },
   { label: '题库', to: '/problems' },
   { label: '对战', to: '/' },
@@ -141,14 +139,6 @@ function handleLinkClick(item) {
   isOpen.value = false
 
   switch (item.label) {
-    case '用户信息':
-      if (isLogin.value && userId.value) {
-        router.push(`/users/${userId.value}`)
-      } else {
-        loginVisible.value = true
-        pendingRoute.value = 'user-profile'
-      }
-      break
     case '对战':
       saberVisible.value = true
       break
@@ -181,12 +171,6 @@ async function logout() {
 
 function handleLoginSuccess() {
   loginVisible.value = false
-  nextTick(() => {
-    if (pendingRoute.value === 'user-profile' && userId.value) {
-      router.push(`/users/${userId.value}`)
-      pendingRoute.value = null
-    }
-  })
 }
 </script>
 

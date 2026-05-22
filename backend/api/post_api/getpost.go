@@ -3,11 +3,13 @@ package post_api
 import (
 	"GO1/global"
 	"GO1/middlewares/response"
+	"GO1/models/cursor"
 	"GO1/models/post_model"
 	"GO1/pkg/jwt"
 	service "GO1/service/user_service/user_post_service"
-	"github.com/gin-gonic/gin"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (PostAPI) GetAllPost(c *gin.Context) {
@@ -50,4 +52,21 @@ func (PostAPI) GetThePagePost(c *gin.Context) {
 	}
 
 	response.OkWithData(posts, c)
+}
+
+func (PostAPI) GetNextCursorPosts(c *gin.Context) {
+	jwt.SaveUserIDFromToken(c)
+	var cu cursor.CursorReq
+	if err := c.ShouldBind(&cu); err != nil {
+		response.FailWithCode(response.BadRequest, c)
+		return
+	}
+	resp := service.GetNextCursorPosts(c, cu)
+
+	if resp.Code == 1 {
+		response.FailWithMessage(resp.Message, c)
+		return
+	}
+
+	response.OkWithData(resp, c)
 }

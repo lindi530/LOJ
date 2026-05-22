@@ -16,8 +16,12 @@ export default {
   getUserProfileInfo(userId) {
     return request.get(`/users/${userId}`)
   },
-  getPosts(page, pageSize) {
-    return request.get(`/posts?page=${page}&page_size=${pageSize}`)
+  getCursorPosts(payload) {
+    return request({
+      url: '/posts/cursor_page',
+      method: 'get',
+      params: payload
+    })
   },
   getUserList() {
     return request.get('users/userlist')

@@ -3,10 +3,12 @@ package jwt
 import (
 	"GO1/models"
 	"errors"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 // 生成 JWT
@@ -72,6 +74,11 @@ func GetUserIdFromToken(authHeader string) int64 {
 		return 0
 	}
 	return claims.UserId
+}
+
+func SaveUserIDFromToken(c *gin.Context) {
+	claims, _ := GetUserClaims(c.GetHeader("Authorization"))
+	c.Set("UserID", claims.UserId)
 }
 
 func GetUserClaims(authHeader string) (*models.CustomClaims, error) {

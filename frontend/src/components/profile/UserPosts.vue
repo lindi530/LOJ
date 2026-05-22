@@ -30,7 +30,7 @@ import { dialogError } from "@/utils/dialog"
 import { useDialog  } from 'naive-ui'
 import { ref, onMounted, watch } from 'vue';
 import api from '@/api';
-import SimplePost from '../post/PostSimple.vue';
+import SimplePost from '../posts/PostSimple.vue';
 
 // props
 const props = defineProps({
