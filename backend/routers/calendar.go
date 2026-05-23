@@ -10,7 +10,7 @@ import (
 func CalendarRouter(router *gin.RouterGroup) {
 	auth := router.Group("/calendar")
 
-	auth.GET("/submissions/:userId", api.ApiGroups.CalendarAPI.GetSubmissionCalendar)
+	auth.POST("/submissions/:userId", api.ApiGroups.CalendarAPI.GetSubmissionCalendar)
 
 	auth.Use(jwt.JWTAuthMiddleware())
 	{

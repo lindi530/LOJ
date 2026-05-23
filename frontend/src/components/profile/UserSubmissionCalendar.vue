@@ -236,15 +236,20 @@ async function fetchCalendar() {
   loading.value = true;
 
   try {
-    const resp = await api.getUserSubmissionCalendar(props.userId, {
-      startTime: formatRFC3339AtMidnight(start),
-      endTime: formatRFC3339AtMidnight(end)
-    });
+
+    const requestData = {
+      start_date: formatRFC3339AtMidnight(start),
+      end_date: formatRFC3339AtMidnight(end)
+    };
+
+    console.log('请求提交日历数据，参数：', requestData);
+
+    const resp = await api.getUserSubmissionCalendar(props.userId, requestData);
 
     if (resp.code === 0) {
       calendarData.value = {
-        totalAC: Number(resp.data?.totalAC || 0),
-        activeDays: Number(resp.data?.activeDays || 0),
+        totalAC: Number(resp.data?.total_ac || 0),
+        activeDays: Number(resp.data?.active_days || 0),
         days: Array.isArray(resp.data?.days) ? resp.data.days : []
       };
     } else {

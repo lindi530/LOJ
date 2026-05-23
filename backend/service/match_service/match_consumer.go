@@ -9,7 +9,7 @@ import (
 func StartMatchConsumer() { // 监听匹配信息
 
 	msgs, err := global.MQChannel.Consume(
-		"match_queue", "", true, false, false, false, nil,
+		"match_queue", "", false, false, false, false, nil,
 	)
 	if err != nil {
 		global.Logger.Error("Failed to register RabbitMQ consumer: %v", err)

@@ -14,17 +14,25 @@ import (
 	"GO1/pkg/validator"
 	"GO1/routers"
 	"GO1/service/match_service"
+	"GO1/service/mq_service/ac_calendar_mq"
 	"GO1/service/ws_service"
 	"fmt"
+
 	"github.com/robfig/cron/v3"
 )
 
 func main() {
-	initDependencies()        //初始化依赖
-	initCustomValidator()     // 注册自定义验证器
-	go ws_service.WsHub.Run() // go 协程
-	go startCronJob()         // 定时作业
-	go syncInitialData()      // 初始同步数据
+	initDependencies()    //初始化依赖
+	initCustomValidator() // 注册自定义验证器
+	go ws_service.WsHub.Run()
+	go startCronJob()    // 定时作业
+	go syncInitialData() // 初始同步数据
+	go ac_calendar_mq.StartACProblemSenderEveryMinute()
+	go func() {
+		if err := ac_calendar_mq.ConsumeACCalendar(); err != nil {
+			fmt.Println("consume ac calendar failed:", err)
+		}
+	}()
 	startServer()
 }
 

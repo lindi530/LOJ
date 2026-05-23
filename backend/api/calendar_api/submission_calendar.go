@@ -13,15 +13,16 @@ import (
 func (CalendarAPI) GetSubmissionCalendar(c *gin.Context) {
 
 	var scr calendar_model.CalendarSubmissionReq
-	if err := c.ShouldBind(&scr); err != nil {
+
+	if err := c.ShouldBindJSON(&scr); err != nil {
 		response.FailWithCode(response.BadRequest, c)
 		return
 	}
+
+	global.Logger.Error("Req 信息:", scr)
 	jwt.SaveUserIDFromToken(c)
 
 	resp := calendar_service.GetSubmissionCalendar(c, &scr)
-
-	global.Logger.Error("resp: ", resp)
 
 	if resp.Code == 1 {
 		response.FailWithMessage(resp.Message, c)

@@ -6,14 +6,13 @@ import (
 	"time"
 )
 
-func GetSubmissionCalendar(userID int64, startTime, endTime time.Time) (data []calendar_model.CalendarSubmission, err error) {
+func GetSubmissionCalendar(userID int64, startDate, endDate time.Time) (data []calendar_model.CalendarSubmission, err error) {
 
 	err = global.DB.
 		Select("ac_count, ac_date").
-		Where("user_id = ? AND ac_date >= ? AND ac_date <= ?", userID, startTime, endTime).
+		Where("user_id = ? AND ac_date >= ? AND ac_date <= ?", userID, startDate, endDate).
 		Order("ac_date ASC").
 		Find(&data).Error
 
-	global.Logger.Error("数据库错误：", err)
 	return
 }

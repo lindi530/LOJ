@@ -21,7 +21,7 @@
         v-model:value="internalCode"
         :language="internalLang"
         :theme="theme"
-        :height="editorHeight"
+        height="100%"
         :options="editorOptions"
       />
     </div>
@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick, defineAsyncComponent } from 'vue'
+import { ref, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { NCard, NSelect, NButton, NSpace, useMessage } from 'naive-ui'
 import { useIntersectionObserver } from '@vueuse/core'
 import api from '@/api'
@@ -77,7 +77,6 @@ const internalLang = ref('cpp')
 const internalCode = ref('')
 const editorReady = ref(false)
 const editorContainer = ref(null)
-const editorHeight = ref(0) // 初始化为0，由父容器计算决定
 const theme = ref('vs-light')
 const userEdited = ref(false)
 const message = useMessage()
@@ -88,41 +87,12 @@ const activeStatus = ref('')
 const outputValue = ref('')
 const { registerSubmitCodeCallback } = useWebSocketContext()
 
-// 存储 ResizeObserver 实例
-let resizeObserver = null
-
 function defaultCode(lang) {
   return {
     cpp: `#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n  return 0;\n}`,
     python: `class Solution:\n    def twoSum(self, nums, target):\n        pass`,
     go: `package main\n\nimport(\n  \"fmt\"\n)\n\nfunc main() {\n}`
   }[lang] || ''
-}
-
-// 计算编辑器可用高度（减去其他元素占用的空间）
-const calculateEditorHeight = () => {
-  if (!editorContainer.value) return 0
-  
-  // 获取父容器高度
-  const containerRect = editorContainer.value.parentElement.getBoundingClientRect()
-  
-  // 计算其他元素占用的高度（卡片头部、按钮区域、测试区域）
-  const headerHeight = 60 // 卡片头部大致高度
-  const buttonAreaHeight = 50 // 按钮区域高度
-  const testAreaHeight = 200 // 测试区域大致高度
-  const padding = 30 // 内边距总和
-  
-  // 计算可用高度
-  const availableHeight = containerRect.height - headerHeight - buttonAreaHeight - testAreaHeight - padding
-  return Math.max(300, availableHeight) // 确保最小高度为300px
-}
-
-// 监听容器尺寸变化并更新编辑器高度
-const handleContainerResize = () => {
-  if (editorContainer.value) {
-    const newHeight = calculateEditorHeight()
-    editorHeight.value = newHeight
-  }
 }
 
 const handleTestSample = (value) => {
@@ -218,26 +188,8 @@ const editorOptions = {
   fontSize: 14
 }
 
-onMounted(async () => {
+onMounted(() => {
   internalCode.value = defaultCode(internalLang.value)
-  await nextTick()
-  
-  // 初始化时计算一次高度
-  handleContainerResize()
-  
-  // 监听容器尺寸变化（包括父组件大小变化）
-  if ('ResizeObserver' in window) {
-    resizeObserver = new ResizeObserver(entries => {
-      requestAnimationFrame(() => {
-        handleContainerResize()
-      })
-    })
-    
-    if (editorContainer.value && editorContainer.value.parentElement) {
-      // 监听父元素的尺寸变化（关键）
-      resizeObserver.observe(editorContainer.value.parentElement)
-    }
-  }
   
   const { stop } = useIntersectionObserver(
     editorContainer,
@@ -247,8 +199,6 @@ onMounted(async () => {
       if (isIntersecting && !editorReady.value) {
         setTimeout(() => {
           editorReady.value = true
-          // 可见时再计算一次高度
-          handleContainerResize()
         }, 100)
       }
     }
@@ -258,13 +208,6 @@ onMounted(async () => {
     stop()
     unregister()
   })
-})
-
-onUnmounted(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-    resizeObserver = null
-  }
 })
 </script>
 
@@ -280,15 +223,11 @@ onUnmounted(() => {
 }
 .editor-container {
   width: 100%;
-  /* 关键：使用100%高度而不是固定值 */
-  height: 100%;
-  min-height: 300px; /* 确保最小高度 */
+  height: clamp(300px, 50vh, 520px);
 }
 
-/* 确保父容器可以被正确计算高度 */
 :deep(.n-card__content) {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 </style>

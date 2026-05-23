@@ -6,7 +6,7 @@ import (
 
 type CalendarSubmission struct {
 	ID      int64     `json:"id"`
-	UserId  int64     `json:"user_id"`
+	UserID  int64     `json:"user_id"`
 	ACCount int       `json:"ac_count"`
 	ACDate  time.Time `json:"ac_date"`
 }
@@ -16,8 +16,8 @@ func (CalendarSubmission) TableName() string {
 }
 
 type CalendarSubmissionReq struct {
-	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time"`
+	StartDate time.Time `form:"start_date" json:"start_date" binding:"required"`
+	EndDate   time.Time `form:"end_date" json:"end_date" binding:"required"`
 }
 
 type CalendarSubmissionResp struct {
@@ -27,6 +27,6 @@ type CalendarSubmissionResp struct {
 }
 
 type SubmissionDays struct {
-	Date    time.Time `json:"data"`
+	Date    time.Time `json:"date"`
 	ACCount int       `json:"ac_count"`
 }

@@ -28,8 +28,9 @@ func RunCode(userid int64, code, language string, testcases *[]problem_model.Exa
 	switch language {
 	case "cpp":
 		codeFileName = "code.cpp"
-		compileCmd = "g++ /app/code.cpp -o /app/a.out"
-		runCmd = "/app/a.out"
+		// Native binaries cannot execute from the shared /app judge volume.
+		compileCmd = "g++ /app/code.cpp -o /tmp/a.out"
+		runCmd = "/tmp/a.out"
 		image = "gcc:15"
 	case "python":
 		codeFileName = "code.py"
@@ -42,8 +43,8 @@ func RunCode(userid int64, code, language string, testcases *[]problem_model.Exa
 		image = "openjdk:latest"
 	case "go":
 		codeFileName = "code.go"
-		compileCmd = "go build -o /app/a.out /app/code.go"
-		runCmd = "/app/a.out"
+		compileCmd = "go build -o /tmp/a.out /app/code.go"
+		runCmd = "/tmp/a.out"
 		image = "golang:latest"
 	default:
 		return []problem_model.RunResult{{Passed: false, Error: "Unsupported language"}}

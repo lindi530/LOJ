@@ -2,6 +2,7 @@ package calendar_service
 
 import (
 	"GO1/database/mysql/calendar_mysql"
+	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/calendar_model"
 	"GO1/pkg/constants"
@@ -11,16 +12,18 @@ import (
 
 func GetSubmissionCalendar(c *gin.Context, req *calendar_model.CalendarSubmissionReq) (resp response.Response) {
 	respData := &calendar_model.CalendarSubmissionResp{}
-	startTime := req.StartTime
-	endTime := req.EndTime
+	startDate := req.StartDate
+	endDate := req.EndDate
 	userID, exists := c.Get(constants.UserID)
 	if !exists {
 		resp.Code = 1
 		resp.Message = "用户ID错误！"
 		return
 	}
-
-	data, err := calendar_mysql.GetSubmissionCalendar(userID.(int64), startTime, endTime)
+	global.Logger.Error("UserID: ", userID)
+	global.Logger.Error("StartTime: ", startDate)
+	global.Logger.Error("EndTime: ", endDate)
+	data, err := calendar_mysql.GetSubmissionCalendar(userID.(int64), startDate, endDate)
 	if err != nil {
 		resp.Code = 1
 		resp.Message = "数据查询错误"

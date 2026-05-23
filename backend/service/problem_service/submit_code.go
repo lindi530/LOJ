@@ -2,6 +2,7 @@ package problem_service
 
 import (
 	"GO1/database/mysql/problem_mysql"
+	"GO1/database/redis/calendar_redis"
 	"GO1/middlewares/response"
 	"GO1/models/problem_model"
 	"GO1/models/problem_submission_model"
@@ -57,6 +58,10 @@ func SubmitCode(userid int64, codeSubmission problem_model.CodeSubmission, messa
 		Score:     math.Round(float64(acCount)/float64(totalCount)*10000) / 100,
 		CreatedAt: time.Now(),
 	})
+
+	if msgContent == "Accepted" {
+		_ = calendar_redis.SaveACProblem(userid, codeSubmission.ProblemID)
+	}
 
 	ws_service.WsHub.SendEditData(message, msgContent)
 	resp.Data = runResult
