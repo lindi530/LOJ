@@ -2,6 +2,7 @@ package api
 
 import (
 	"GO1/api/auth_api"
+	"GO1/api/calendar_api"
 	"GO1/api/chat_api"
 	"GO1/api/comment_api"
 	"GO1/api/image_api"
@@ -28,6 +29,7 @@ type ApiGroup struct {
 	MatchAPI    match_api.MatchAPI
 	SaberAPI    saber_api.SaberAPI
 	UploadAPI   upload_api.UploadAPI
+	CalendarAPI calendar_api.CalendarAPI
 }
 
 var ApiGroups = new(ApiGroup)

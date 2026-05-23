@@ -1,7 +1,12 @@
 <template>
   <div class="profile-page">
     <div class="profile-shell">
-      <UserProfileInfo :user="user"/>
+      <UserProfileInfo class="profile-info-panel" :user="user"/>
+
+      <UserSubmissionCalendar
+        class="calendar-panel"
+        :user-id="userId"
+      />
 
       <main class="profile-main">
         <n-card class="activity-card" :bordered="false">
@@ -39,6 +44,7 @@ import { useStore } from 'vuex';
 import { useRoute } from 'vue-router';
 import { useDialog }  from 'naive-ui'
 import UserProfileInfo from '../components/profile/UserProfileInfo.vue';
+import UserSubmissionCalendar from '../components/profile/UserSubmissionCalendar.vue';
 import UserPosts from '../components/profile/UserPosts.vue';
 import UserSubmissions from '../components/profile/UserSubmissions.vue';
 import NewPostForm from '../components/profile/NewPostForm.vue';
@@ -115,13 +121,27 @@ const loadUserProfile = async () => {
 .profile-shell {
   display: grid;
   grid-template-columns: minmax(240px, 286px) minmax(0, 1fr);
-  gap: 22px;
+  grid-template-areas:
+    "info calendar"
+    ". main";
+  gap: 18px 22px;
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  align-items: start;
+  align-items: stretch;
+}
+
+.profile-info-panel {
+  grid-area: info;
+}
+
+.calendar-panel {
+  grid-area: calendar;
+  align-self: stretch;
+  min-width: 0;
 }
 
 .profile-main {
+  grid-area: main;
   display: flex;
   min-width: 0;
   flex-direction: column;
@@ -161,6 +181,10 @@ const loadUserProfile = async () => {
 @media (max-width: 900px) {
   .profile-shell {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "info"
+      "calendar"
+      "main";
   }
 }
 

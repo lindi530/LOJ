@@ -3,6 +3,7 @@ package routers
 import (
 	"GO1/api"
 	"GO1/middlewares/jwt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,7 +12,6 @@ func UsersRouter(router *gin.RouterGroup) {
 
 	users.POST("/register", api.ApiGroups.UserAPI.UserAccountAPI.Register)
 	users.POST("/login", api.ApiGroups.UserAPI.UserAccountAPI.Login)
-
 	users.POST("/online", api.ApiGroups.UserAPI.RefreshOnlineState)
 
 	users.Use(jwt.JWTAuthMiddleware())

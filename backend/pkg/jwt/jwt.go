@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"GO1/models"
+	"GO1/pkg/constants"
 	"errors"
 	"strings"
 	"time"
@@ -78,7 +79,7 @@ func GetUserIdFromToken(authHeader string) int64 {
 
 func SaveUserIDFromToken(c *gin.Context) {
 	claims, _ := GetUserClaims(c.GetHeader("Authorization"))
-	c.Set("UserID", claims.UserId)
+	c.Set(constants.UserID, claims.UserId)
 }
 
 func GetUserClaims(authHeader string) (*models.CustomClaims, error) {

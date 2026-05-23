@@ -125,6 +125,9 @@ export default {
   getUserSubmissionList(userId, page, pageSize) {
     return request.get(`/users/${userId}/submissions?page=${page}&page_size=${pageSize}`);
   },
+  getUserSubmissionCalendar(userId, data) {
+    return request.get(`/calendar/submissions/${userId}`, data)
+  },
   getProblemSubmissionList(problemID) {
     return request.get(`/problems/${problemID}/submissions`)
   },

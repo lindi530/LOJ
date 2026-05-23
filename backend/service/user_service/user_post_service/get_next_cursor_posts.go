@@ -6,6 +6,7 @@ import (
 	"GO1/middlewares/response"
 	"GO1/models/cursor"
 	"GO1/models/post_model"
+	"GO1/pkg/constants"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +34,7 @@ func GetNextCursorPosts(c *gin.Context, cursor cursor.CursorReq) (resp response.
 		posts = posts[:limit]
 	}
 	respData.Cursor.Cursor = posts[len(posts)-1].PostID
-	value, _ := c.Get("UserID")
+	value, _ := c.Get(constants.UserID)
 	global.Logger.Error("postAuthor.Avatar: ", posts[0].Author.Avatar)
 	respData.Posts = BuildPostsResponse(value.(int64), posts)
 	resp.Data = respData
