@@ -43,10 +43,12 @@ import bgImg from "@/assets/1.png";
   width: 100%;
   height: 100vh;          /* 填满视口 */
   z-index: -1;            /* 放到内容下方 */
-  background-image: url(~@/assets/back.jpg); /* 或使用 import 后动态绑定 */
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: #f5f7fa;
+  background-image:
+    linear-gradient(135deg, rgba(198, 210, 228, 0.12) 25%, transparent 25%),
+    linear-gradient(315deg, rgba(198, 210, 228, 0.12) 25%, transparent 25%);
+  background-size: 92px 92px;
+  background-repeat: repeat;
 }
 
 /* 内容层 */

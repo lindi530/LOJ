@@ -12,6 +12,9 @@ import Problem from '@/views/ProblemListView.vue'
 import ProblemDetail from '@/views/ProblemView.vue'
 import ProblemUpload from '@/views/ProblemUpload.vue'
 import SubmissionDetail from '@/components/coding/SubmissionDetail.vue'
+import Competition from '@/views/CompetitionView.vue'
+import CompetitionCreate from '@/views/CompetitionCreateView.vue'
+import CompetitionDetail from '@/views/CompetitionDetailView.vue'
 
 const routes = [
   {
@@ -70,6 +73,21 @@ const routes = [
     path: '/upload/problem',
     name: 'ProblemUpload',
     component: ProblemUpload
+  },
+  {
+    path: '/competition',
+    name: 'Competition',
+    component: Competition
+  },
+  {
+    path: '/competition/create',
+    name: 'CompetitionCreate',
+    component: CompetitionCreate
+  },
+  {
+    path: '/competition/:competition_id',
+    name: 'CompetitionDetail',
+    component: CompetitionDetail
   },
   {
     path: '/test',

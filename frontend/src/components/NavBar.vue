@@ -130,6 +130,7 @@ const leftLinks = computed(() => [
   { label: '帖子', to: '/' },
   { label: '用户列表', to: '/users/userList' },
   { label: '题库', to: '/problems' },
+  { label: '竞赛', to: '/competition' },
   { label: '对战', to: '/' },
   { label: '题目上传', to: '/upload/problem' },
   { label: '测试', to: '/test' }

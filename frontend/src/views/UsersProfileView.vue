@@ -115,7 +115,6 @@ const loadUserProfile = async () => {
 .profile-page {
   min-height: calc(100vh - 60px);
   padding: 28px 0 56px;
-  background: rgba(247, 248, 250, 0.96);
 }
 
 .profile-shell {

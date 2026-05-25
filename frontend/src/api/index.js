@@ -133,6 +133,15 @@ export default {
   },
   getSubmissionDetail(submissionID) {
     return request.get(`/problems/submissions/${submissionID}`)
+  },
+  getCompetitionList() {
+    return request.get('/competition')
+  },
+  getCompetitionRankList() {
+    return request.get('/competition/rank')
+  },
+  createCompetition(data) {
+    return request.post('/competition', data)
   }
   // 这里按需继续扩展接口
 };

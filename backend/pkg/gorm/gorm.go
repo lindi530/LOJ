@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -39,18 +40,25 @@ func InitGorm() {
 		"database/sql/competitions.sql",
 	}
 
-	var allSQL string
 	for _, file := range files {
 		sqlBytes, err := os.ReadFile(file)
 		if err != nil {
-			global.Logger.Error("SQL数据读取失败！文件：" + file)
+			global.Logger.Error("SQL文件读取失败: " + file)
 			return
 		}
-
-		allSQL += string(sqlBytes) + "\n"
+		sql := string(sqlBytes)
+		// 去除首尾空白，如果末尾有分号，MySQL 可以接受（也可以去掉）
+		sql = strings.TrimSpace(sql)
+		if sql == "" {
+			continue
+		}
+		if err := db.Exec(sql).Error; err != nil {
+			global.Logger.Error("执行SQL失败: " + file + ", 错误: " + err.Error())
+			return
+		}
+		global.Logger.Info("成功执行SQL文件: " + file)
 	}
 
-	err = db.Exec(allSQL).Error
 	if err != nil {
 		global.Logger.Error("数据库创建失败！")
 		return
