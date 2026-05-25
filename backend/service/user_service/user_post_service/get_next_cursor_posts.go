@@ -2,7 +2,6 @@ package user_post_service
 
 import (
 	"GO1/database/mysql/post_mysql"
-	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/cursor"
 	"GO1/models/post_model"
@@ -34,8 +33,10 @@ func GetNextCursorPosts(c *gin.Context, cursor cursor.CursorReq) (resp response.
 		posts = posts[:limit]
 	}
 	respData.Cursor.Cursor = posts[len(posts)-1].PostID
-	value, _ := c.Get(constants.UserID)
-	global.Logger.Error("postAuthor.Avatar: ", posts[0].Author.Avatar)
+	value, exists := c.Get(constants.LoginUserIDKey)
+	if !exists {
+		value = constants.NoUserID
+	}
 	respData.Posts = BuildPostsResponse(value.(int64), posts)
 	resp.Data = respData
 	return

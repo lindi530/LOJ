@@ -22,7 +22,7 @@ func GenerateAccessToken(userID int64, userName string) (string, error) {
 		"",
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(AccessTokenDuration)),
-			Issuer:    "GO1", // 签发人
+			Issuer:    "LOJ", // 签发人
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -49,6 +49,11 @@ func GenerateRefreshToken(userID int64, userName string) (string, string, error)
 
 // 解析 JWT
 func ParseToken(tokenStr string) (*models.CustomClaims, error) {
+
+	if strings.TrimSpace(tokenStr) == "" {
+		return nil, constants.NotLogin
+	}
+
 	claims := &models.CustomClaims{}
 
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
@@ -71,15 +76,24 @@ func ParseToken(tokenStr string) (*models.CustomClaims, error) {
 
 func GetUserIdFromToken(authHeader string) int64 {
 	claims, err := GetUserClaims(authHeader)
-	if err != nil {
+	switch {
+	case errors.Is(err, constants.NotLogin):
+		return constants.NoUserID
+	case err != nil:
 		return 0
 	}
+
 	return claims.UserId
 }
 
 func SaveUserIDFromToken(c *gin.Context) {
 	claims, _ := GetUserClaims(c.GetHeader("Authorization"))
-	c.Set(constants.UserID, claims.UserId)
+
+	userID := constants.NoUserID
+	if claims != nil {
+		userID = claims.UserId
+	}
+	c.Set(constants.LoginUserIDKey, userID)
 }
 
 func GetUserClaims(authHeader string) (*models.CustomClaims, error) {

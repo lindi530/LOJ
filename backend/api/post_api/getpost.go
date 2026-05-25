@@ -56,6 +56,7 @@ func (PostAPI) GetThePagePost(c *gin.Context) {
 
 func (PostAPI) GetNextCursorPosts(c *gin.Context) {
 	jwt.SaveUserIDFromToken(c)
+
 	var cu cursor.CursorReq
 	if err := c.ShouldBind(&cu); err != nil {
 		response.FailWithCode(response.BadRequest, c)

@@ -34,12 +34,23 @@ func InitGorm() {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour * 4)
 
-	sqlBytes, err := os.ReadFile("database/sql/calendar_submissions.sql")
-	if err != nil {
-		global.Logger.Error("SQL数据读取失败！")
-		return
+	files := []string{
+		"database/sql/calendar_submissions.sql",
+		"database/sql/competitions.sql",
 	}
-	err = db.Exec(string(sqlBytes)).Error
+
+	var allSQL string
+	for _, file := range files {
+		sqlBytes, err := os.ReadFile(file)
+		if err != nil {
+			global.Logger.Error("SQL数据读取失败！文件：" + file)
+			return
+		}
+
+		allSQL += string(sqlBytes) + "\n"
+	}
+
+	err = db.Exec(allSQL).Error
 	if err != nil {
 		global.Logger.Error("数据库创建失败！")
 		return

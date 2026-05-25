@@ -48,7 +48,7 @@ const props = defineProps({
   buttonFontSize: {
     type: Number,
     required: true,
-    validator: (value) => value >= 20 && value <= 36
+    validator: (value) => value > 0
   },
   leftOffset: {
     type: Number,

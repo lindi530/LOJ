@@ -3,9 +3,13 @@ package post_likes
 import (
 	"GO1/global"
 	"GO1/models/post_model"
+	"GO1/pkg/constants"
 )
 
 func PostLikeCheck(userId, postId int64) bool {
+	if userId == constants.NoUserID {
+		return false
+	}
 	var count int64
 	// 只查询记录数量，性能更优
 	err := global.DB.Model(&post_model.PostLike{}).

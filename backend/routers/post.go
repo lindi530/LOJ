@@ -10,11 +10,11 @@ import (
 func PostsRouter(router *gin.RouterGroup) {
 	posts := router.Group("/posts")
 	posts.GET("/:post_id/comments", api.ApiGroups.PostAPI.GetComments)
+	posts.GET("/cursor_page", api.ApiGroups.PostAPI.GetNextCursorPosts)
+	posts.GET("/page", api.ApiGroups.PostAPI.GetThePagePost)
+	posts.GET("/:post_id", api.ApiGroups.PostAPI.GetOnePost)
 	posts.Use(jwt.JWTAuthMiddleware())
 	{
-		posts.GET("/cursor_page", api.ApiGroups.PostAPI.GetNextCursorPosts)
-		posts.GET("/page", api.ApiGroups.PostAPI.GetThePagePost)
-		posts.GET("/:post_id", api.ApiGroups.PostAPI.GetOnePost)
 		posts.GET("", api.ApiGroups.PostAPI.GetAllPost)
 		posts.POST("/:post_id/comments", api.ApiGroups.PostAPI.CreateComment)
 		posts.DELETE("/comments/:comment_id", api.ApiGroups.PostAPI.DeleteComment)
