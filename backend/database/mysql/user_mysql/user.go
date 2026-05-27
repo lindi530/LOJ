@@ -3,8 +3,8 @@ package user_mysql
 import (
 	"GO1/global"
 	"GO1/models/user_model"
+	"GO1/pkg/password_hash"
 	"GO1/pkg/snowflake"
-	"GO1/service/hash"
 	"fmt"
 	"time"
 )
@@ -12,7 +12,7 @@ import (
 func Register(register user_model.ParamRegister) {
 
 	userId := snowflake.Snowflake{}.GenID()
-	hashPassword, err := hash.HashPassword(register.Password)
+	hashPassword, err := password_hash.HashPassword(register.Password)
 
 	if err != nil {
 		global.Logger.Error(fmt.Sprintf("%s hash password error: %v", register.Name, err))

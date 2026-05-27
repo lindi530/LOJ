@@ -19,6 +19,9 @@ const (
 	DeleteFail
 	UploadFail
 	FindMessagesFail
+	ReqError
+	MysqlError
+	CompetitionNotFound
 	NotFound = 404
 )
 
@@ -40,5 +43,8 @@ var (
 		UploadFail:          "上传失败",
 		FindMessagesFail:    "消息查询失败",
 		ExpiredAccessToken:  "access_token已过期",
+		ReqError:            "参数错误",
+		MysqlError:          "数据库操作失败",
+		CompetitionNotFound: "该竞赛不存在",
 	}
 )

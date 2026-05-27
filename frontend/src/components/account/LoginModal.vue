@@ -24,7 +24,7 @@
         />
       </div>
       <div class="d-flex align-items-center">
-        <Button type="primary" html-type="submit">登录</Button>
+        <button type="submit" class="btn btn-primary">登录</button>
         <transition name="fade">
           <div v-if="errorMessage" class="text-danger ms-3">
             <i class="bi bi-exclamation-circle-fill me-1"></i>

@@ -134,14 +134,24 @@ export default {
   getSubmissionDetail(submissionID) {
     return request.get(`/problems/submissions/${submissionID}`)
   },
-  getCompetitionList() {
-    return request.get('/competition')
+  getCompetitionsByEndStatus(hasEnded, page) {
+    const pagination = page ? `?page=${page}` : ''
+    return request.get(`/competition/${hasEnded}${pagination}`)
   },
   getCompetitionRankList() {
     return request.get('/competition/rank')
   },
   createCompetition(data) {
-    return request.post('/competition', data)
+    return request.post('/competition/create', data)
+  },
+  enterCompetition(competitionId) {
+    return request.post(`/competition/enter/${competitionId}`)
+  },
+  cancelCompetitionEntry(competitionId) {
+    return request.delete(`/competition/enter/${competitionId}`)
+  },
+  hasEnteredCompetition(competitionId) {
+    return request.get(`/competition/has_entered/${competitionId}`)
   }
   // 这里按需继续扩展接口
 };

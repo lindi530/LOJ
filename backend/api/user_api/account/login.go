@@ -6,8 +6,9 @@ import (
 	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/user_model"
-	"GO1/service/hash"
+	"GO1/pkg/password_hash"
 	service "GO1/service/user_service"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,7 +32,7 @@ func (UserAccountAPI) Login(c *gin.Context) {
 		return
 	}
 
-	if result := hash.CheckPassword(user.Password, input.Password); !result {
+	if result := password_hash.CheckPassword(user.Password, input.Password); !result {
 		response.FailWithCode(response.InvalidLoginInfo, c)
 		return
 	}

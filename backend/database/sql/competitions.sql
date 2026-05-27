@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS competitions (
     creator_id BIGINT NOT NULL,
     creator_name VARCHAR(64) NOT NULL,
 
+    announcement TEXT COMMENT '公告',
+
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -21,6 +23,5 @@ CREATE TABLE IF NOT EXISTS competitions (
     INDEX idx_creator_id (creator_id),
 
     CHECK (status IN (1, 2, 3)),
-    CHECK (visibility IN (0, 1)),
-    CHECK (is_hidden IN (0, 1))
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='竞赛表';
+    CHECK (visibility IN (0, 1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='竞赛表';

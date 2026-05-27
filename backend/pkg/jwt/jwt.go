@@ -86,14 +86,17 @@ func GetUserIdFromToken(authHeader string) int64 {
 	return claims.UserId
 }
 
-func SaveUserIDFromToken(c *gin.Context) {
+func SaveUserInfoFromToken(c *gin.Context) {
 	claims, _ := GetUserClaims(c.GetHeader("Authorization"))
 
 	userID := constants.NoUserID
+	userName := constants.NoUserName
 	if claims != nil {
 		userID = claims.UserId
+		userName = claims.UserName
 	}
 	c.Set(constants.LoginUserIDKey, userID)
+	c.Set(constants.LoginUserNameKey, userName)
 }
 
 func GetUserClaims(authHeader string) (*models.CustomClaims, error) {

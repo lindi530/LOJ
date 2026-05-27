@@ -1,180 +1,278 @@
 <template>
-  <section class="card border-0 shadow-sm contest-card">
-    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center px-4 py-3">
-      <h2 class="h5 fw-semibold mb-0">竞赛列表</h2>
-      <span class="small text-secondary">全部竞赛</span>
-    </div>
+  <div class="competition-sections">
+    <section class="competition-list">
+      <header class="competition-list__header">
+        <h2 class="competition-list__title">未结束竞赛</h2>
+      </header>
 
-    <div v-if="loading" class="list-group list-group-flush" aria-label="竞赛列表加载中">
-      <div v-for="index in 3" :key="index" class="list-group-item px-4 py-4">
-        <p class="placeholder-glow mb-2">
-          <span class="placeholder col-5"></span>
-        </p>
-        <p class="placeholder-glow mb-0">
-          <span class="placeholder col-7 placeholder-sm"></span>
-        </p>
+      <div v-if="ongoingLoading" class="competition-list__cards" aria-label="未结束竞赛加载中">
+        <div v-for="index in 2" :key="index" class="competition-list__skeleton">
+          <span class="competition-list__skeleton-image placeholder-glow">
+            <span class="placeholder"></span>
+          </span>
+          <span class="competition-list__skeleton-content placeholder-glow">
+            <span class="placeholder col-7"></span>
+            <span class="placeholder col-10 placeholder-sm"></span>
+            <span class="placeholder col-8 placeholder-sm"></span>
+          </span>
+        </div>
       </div>
-    </div>
 
-    <div v-else-if="error" class="p-4 text-center">
-      <p class="text-secondary mb-3">{{ error }}</p>
-      <button type="button" class="btn btn-outline-secondary btn-sm" @click="$emit('retry')">
-        重新加载
-      </button>
-    </div>
+      <div v-else-if="ongoingError" class="competition-list__state text-center">
+        <p class="text-secondary mb-3">{{ ongoingError }}</p>
+        <button type="button" class="btn competition-list__retry btn-sm" @click="$emit('retry-ongoing')">
+          重新加载
+        </button>
+      </div>
 
-    <div v-else-if="competitions.length === 0" class="card-body text-center py-5 text-secondary">
-      <i class="bi bi-calendar2-event fs-2 d-block mb-2" aria-hidden="true"></i>
-      暂无竞赛
-    </div>
+      <div v-else-if="ongoingCompetitions.length === 0" class="competition-list__state text-center text-secondary">
+        <i class="bi bi-calendar2-event competition-list__empty-icon" aria-hidden="true"></i>
+        <p class="mb-0">暂无未结束竞赛</p>
+      </div>
 
-    <div v-else class="list-group list-group-flush">
-      <button
-        v-for="competition in competitions"
-        :key="competition.id"
-        type="button"
-        class="list-group-item list-group-item-action d-flex gap-3 px-4 py-3"
-        @click="$emit('select', competition.id)"
-      >
-        <span class="contest-icon flex-shrink-0">
-          <i class="bi bi-trophy" aria-hidden="true"></i>
-        </span>
+      <div v-else class="competition-list__cards">
+        <CompetitionCard
+          v-for="competition in ongoingCompetitions"
+          :key="competition.id"
+          :competition="competition"
+          @select="$emit('select', $event)"
+        />
+      </div>
+    </section>
 
-        <span class="flex-grow-1 text-start overflow-hidden">
-          <span class="d-flex flex-wrap align-items-center gap-2 mb-1">
-            <span class="fw-semibold text-dark text-truncate">{{ competition.name }}</span>
-            <span class="badge rounded-pill" :class="getStatus(competition).classes">
-              {{ getStatus(competition).label }}
-            </span>
+    <section class="competition-list">
+      <header class="competition-list__header">
+        <h2 class="competition-list__title competition-list__title--ended">已结束竞赛</h2>
+      </header>
+
+      <div v-if="endedLoading" class="competition-list__cards" aria-label="已结束竞赛加载中">
+        <div v-for="index in 2" :key="index" class="competition-list__skeleton">
+          <span class="competition-list__skeleton-image placeholder-glow">
+            <span class="placeholder"></span>
           </span>
-          <span class="small text-secondary d-block mb-2">{{ formatSchedule(competition) }}</span>
-          <span class="d-flex flex-wrap gap-2">
-            <span class="badge text-bg-light fw-normal text-secondary">
-              <i class="bi bi-person me-1" aria-hidden="true"></i>{{ competition.creator_name || '未知创建者' }}
-            </span>
-            <span class="badge text-bg-light fw-normal text-secondary">
-              <i class="bi me-1" :class="getAccess(competition).icon" aria-hidden="true"></i>
-              {{ getAccess(competition).label }}
-            </span>
+          <span class="competition-list__skeleton-content placeholder-glow">
+            <span class="placeholder col-7"></span>
+            <span class="placeholder col-10 placeholder-sm"></span>
+            <span class="placeholder col-8 placeholder-sm"></span>
           </span>
-        </span>
+        </div>
+      </div>
 
-        <span class="participants text-end flex-shrink-0">
-          <strong class="d-block fw-semibold text-dark">{{ formatNumber(competition.player_count) }}</strong>
-          <small class="text-secondary">参赛者</small>
-        </span>
-      </button>
-    </div>
-  </section>
+      <div v-else-if="endedError" class="competition-list__state text-center">
+        <p class="text-secondary mb-3">{{ endedError }}</p>
+        <button type="button" class="btn competition-list__retry btn-sm" @click="$emit('retry-ended')">
+          重新加载
+        </button>
+      </div>
+
+      <div v-else-if="endedCompetitions.length === 0" class="competition-list__state text-center text-secondary">
+        <i class="bi bi-calendar2-check competition-list__empty-icon competition-list__empty-icon--ended" aria-hidden="true"></i>
+        <p class="mb-0">暂无已结束竞赛</p>
+      </div>
+
+      <div v-else class="competition-list__cards">
+        <CompetitionCard
+          v-for="competition in endedCompetitions"
+          :key="competition.id"
+          :competition="competition"
+          @select="$emit('select', $event)"
+        />
+      </div>
+
+      <div v-if="endedTotal > endedPageSize" class="competition-list__pagination">
+        <n-pagination
+          :page="endedPage"
+          :page-size="endedPageSize"
+          :item-count="endedTotal"
+          @update:page="$emit('update-ended-page', $event)"
+        />
+      </div>
+    </section>
+  </div>
 </template>
 
 <script setup>
+import { NPagination } from 'naive-ui'
+import CompetitionCard from './CompetitionCard.vue'
+
 defineProps({
-  competitions: {
+  ongoingCompetitions: {
     type: Array,
     default: () => []
   },
-  loading: {
+  endedCompetitions: {
+    type: Array,
+    default: () => []
+  },
+  ongoingLoading: {
     type: Boolean,
     default: false
   },
-  error: {
+  endedLoading: {
+    type: Boolean,
+    default: false
+  },
+  ongoingError: {
     type: String,
     default: ''
+  },
+  endedError: {
+    type: String,
+    default: ''
+  },
+  endedPage: {
+    type: Number,
+    default: 1
+  },
+  endedPageSize: {
+    type: Number,
+    default: 8
+  },
+  endedTotal: {
+    type: Number,
+    default: 0
   }
 })
 
-defineEmits(['select', 'retry'])
-
-const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
-  month: 'short',
-  day: 'numeric',
-  weekday: 'short',
-  hour: '2-digit',
-  minute: '2-digit'
-})
-
-function formatSchedule(competition) {
-  const start = formatTime(competition.start_time)
-  const end = formatTime(competition.end_time)
-  return start && end ? `${start} - ${end}` : '比赛时间待定'
-}
-
-function formatTime(value) {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date)
-}
-
-function formatNumber(value) {
-  return Number(value || 0).toLocaleString('zh-CN')
-}
-
-function getAccess(competition) {
-  if (competition.password_hash) {
-    return { label: '需密码', icon: 'bi-lock' }
-  }
-
-  if (Number(competition.visibility) === 1) {
-    return { label: '公开竞赛', icon: 'bi-globe2' }
-  }
-
-  return { label: '非公开', icon: 'bi-eye-slash' }
-}
-
-function getStatus(competition) {
-  const now = Date.now()
-  const startTime = new Date(competition.start_time).getTime()
-  const endTime = new Date(competition.end_time).getTime()
-
-  if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) {
-    return { label: '待定', classes: 'text-bg-secondary' }
-  }
-
-  if (now < startTime) {
-    return { label: '即将开始', classes: 'status-upcoming' }
-  }
-
-  if (now <= endTime) {
-    return { label: '进行中', classes: 'status-running' }
-  }
-
-  return { label: '已结束', classes: 'text-bg-light text-secondary' }
-}
+defineEmits(['select', 'retry-ongoing', 'retry-ended', 'update-ended-page'])
 </script>
 
 <style scoped>
-.contest-card {
-  border-radius: 0.75rem;
+.competition-sections {
+  display: grid;
+  gap: 1.35rem;
+}
+
+.competition-list {
+  padding: 1.45rem;
+  background: #fff;
+  border: 1px solid #e6edf2;
+  border-radius: 1.15rem;
+  box-shadow: 0 0.45rem 1.5rem rgba(30, 45, 60, 0.06);
+}
+
+.competition-list__header {
+  display: flex;
+  margin-bottom: 1.35rem;
+}
+
+.competition-list__title {
+  position: relative;
+  padding-left: 0.82rem;
+  margin-bottom: 0;
+  color: #182638;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+
+.competition-list__title::before {
+  position: absolute;
+  top: 0.18rem;
+  bottom: 0.18rem;
+  left: 0;
+  width: 0.28rem;
+  content: "";
+  background: #00e09e;
+  border-radius: 999px;
+}
+
+.competition-list__title--ended::before {
+  background: #b9c4cf;
+}
+
+.competition-list__cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.competition-list__state {
+  padding: 3.5rem 1.5rem;
+  background: #fff;
+  border: 1px dashed #dee7ee;
+  border-radius: 1rem;
+}
+
+.competition-list__empty-icon {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #00bd88;
+  font-size: 2rem;
+}
+
+.competition-list__empty-icon--ended {
+  color: #9ca8b4;
+}
+
+.competition-list__retry {
+  color: #008e68;
+  border: 1px solid #00c98d;
+}
+
+.competition-list__retry:hover {
+  color: #fff;
+  background: #00bd85;
+  border-color: #00bd85;
+}
+
+.competition-list__skeleton {
+  display: grid;
+  grid-template-columns: 8.75rem minmax(0, 1fr);
+  gap: 1.25rem;
+  min-height: 10.5rem;
+  padding: 0 1.4rem 0 0;
   overflow: hidden;
+  background: #fff;
+  border: 1px solid #e3eaf0;
+  border-radius: 1rem;
 }
 
-.contest-icon {
-  display: inline-flex;
-  align-items: center;
+.competition-list__skeleton-image .placeholder {
+  display: block;
+  height: 100%;
+  min-height: 10.4rem;
+  border-radius: 0.95rem 0 0 0.95rem;
+}
+
+.competition-list__skeleton-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 0.65rem;
-  background: #fff4e3;
-  color: #ffa116;
-  font-size: 1.25rem;
 }
 
-.list-group-item-action:hover {
-  background-color: #fafafa;
+.competition-list__skeleton-content .placeholder {
+  border-radius: 999px;
 }
 
-.status-upcoming {
-  background: #fff4e3;
-  color: #bd7100;
+.competition-list__pagination {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.35rem;
 }
 
-.status-running {
-  background: #e4f7ec;
-  color: #168143;
-}
+@media (max-width: 575.98px) {
+  .competition-sections {
+    gap: 1rem;
+  }
 
-.participants {
-  min-width: 3.9rem;
+  .competition-list {
+    padding: 1rem;
+  }
+
+  .competition-list__header {
+    margin-bottom: 1rem;
+  }
+
+  .competition-list__skeleton {
+    grid-template-columns: 3.4rem minmax(0, 1fr);
+    min-height: 8.5rem;
+    padding: 1rem 1rem 1rem 0;
+  }
+
+  .competition-list__skeleton-image .placeholder {
+    min-height: 3.4rem;
+    height: 3.4rem;
+    border-radius: 0 0.7rem 0.7rem 0;
+  }
 }
 </style>

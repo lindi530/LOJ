@@ -9,21 +9,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (CompetitionAPI) CreateCompetition(c *gin.Context) {
-	req := competition_model.CompetitionReq{}
+func (CompetitionAPI) HasEnterCompetition(c *gin.Context) {
+	req := competition_model.HasEnterCompetitionReq{}
 
 	jwt.SaveUserInfoFromToken(c)
 
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindUri(&req); err != nil {
 		response.FailWithCode(response.BadRequest, c)
 		return
 	}
 
-	resp := competition_service.CreateCompetition(c, &req)
+	resp := competition_service.HasEnterCompetition(c, &req)
 	if resp.Code == 1 {
 		response.FailWithMessage(resp.Message, c)
 		return
 	}
 
-	response.OkWithMessage(resp.Message, c)
+	response.OkWithData(resp.Data, c)
 }

@@ -1,15 +1,16 @@
 package response
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Response struct {
-	Code    int `json:"code"`
-	ErrCode int `json:"err_code"`
-	Data    any `json:"data"`
-	Message any `json:"message"`
+	Code    int       `json:"code"`
+	ErrCode ErrorCode `json:"err_code"`
+	Data    any       `json:"data"`
+	Message any       `json:"message"`
 }
 
 const (
@@ -17,7 +18,7 @@ const (
 	FAIL    = 1
 )
 
-func Result(code int, errCode int, data interface{}, message interface{}, c *gin.Context) {
+func Result(code int, errCode ErrorCode, data interface{}, message interface{}, c *gin.Context) {
 	c.JSON(http.StatusOK, Response{
 		Code:    code,
 		ErrCode: errCode,
@@ -45,10 +46,10 @@ func FailWithMessage(message any, c *gin.Context) {
 func FailWithCode(errorCode ErrorCode, c *gin.Context) {
 	message, ok := ErrorMap[errorCode]
 	if !ok {
-		Result(FAIL, int(errorCode), errorCode, "未知错误", c)
+		Result(FAIL, errorCode, errorCode, "未知错误", c)
 		return
 	}
-	Result(FAIL, int(errorCode), map[string]any{}, message, c)
+	Result(FAIL, errorCode, map[string]any{}, message, c)
 }
 
 func MessageAndMessage(resp *Response, c *gin.Context) {
