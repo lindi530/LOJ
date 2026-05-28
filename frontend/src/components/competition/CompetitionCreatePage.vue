@@ -178,7 +178,7 @@
                     <span class="badge rounded-pill text-bg-warning">4</span>
                     选择题目
                   </h2>
-                  <span class="text-secondary small">已选 {{ form.problem_ids.length }} 题</span>
+                  <span class="text-secondary small">已选 {{ form.problemIds.length }} 题</span>
                 </div>
 
                 <label class="form-label fw-medium" for="problem-search">搜索并添加题目</label>
@@ -236,27 +236,49 @@
                   </div>
                 </div>
 
-                <h3 class="form-label fw-medium mb-3">已选题目</h3>
                 <div v-if="selectedProblems.length === 0" class="alert alert-light border text-secondary mb-0">
                   尚未选择题目，请使用上方搜索添加题目。
                 </div>
 
                 <div v-else class="list-group">
                   <div
-                    v-for="problem in selectedProblems"
+                    v-for="(problem, index) in selectedProblems"
                     :key="problem.id"
-                    class="list-group-item d-flex align-items-center gap-3"
+                    class="list-group-item d-flex flex-wrap align-items-center gap-3"
                   >
+                    <span class="badge rounded-pill text-bg-warning selected-problem-number">
+                      {{ problemNumber(index) }}
+                    </span>
                     <span class="text-secondary">#{{ problem.id }}</span>
                     <span class="fw-medium flex-grow-1">{{ problem.title }}</span>
                     <span v-if="problem.level" class="badge text-bg-light fw-normal">{{ problem.level }}</span>
+                    <div class="btn-group btn-group-sm" role="group" :aria-label="`${problem.title} 排序`">
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        :disabled="index === 0"
+                        :aria-label="`上移题目 ${problem.title}`"
+                        @click="moveProblem(index, -1)"
+                      >
+                        上移
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        :disabled="index === selectedProblems.length - 1"
+                        :aria-label="`下移题目 ${problem.title}`"
+                        @click="moveProblem(index, 1)"
+                      >
+                        下移
+                      </button>
+                    </div>
                     <button type="button" class="btn btn-outline-secondary btn-sm" @click="removeProblem(problem.id)">
                       移除
                     </button>
                   </div>
                 </div>
 
-                <p v-if="submitted && form.problem_ids.length === 0" class="text-danger small mt-2 mb-0">
+                <p v-if="submitted && form.problemIds.length === 0" class="text-danger small mt-2 mb-0">
                   请至少选择一道竞赛题目。
                 </p>
               </section>
@@ -306,11 +328,11 @@ const form = reactive({
   startTime: '',
   endTime: '',
   announcement: '',
-  problem_ids: []
+  problemIds: []
 })
 
 const selectedProblems = computed(() => (
-  form.problem_ids
+  form.problemIds
     .map((problemId) => problems.value.find((problem) => problem.id === problemId))
     .filter(Boolean)
 ))
@@ -323,7 +345,7 @@ const searchResults = computed(() => {
   }
 
   return problems.value.filter((problem) => {
-    if (form.problem_ids.includes(problem.id)) {
+    if (form.problemIds.includes(problem.id)) {
       return false
     }
 
@@ -398,17 +420,42 @@ function pad(value) {
   return String(value).padStart(2, '0')
 }
 
+function problemNumber(index) {
+  let position = index + 1
+  let number = ''
+
+  while (position > 0) {
+    position -= 1
+    number = String.fromCharCode(65 + (position % 26)) + number
+    position = Math.floor(position / 26)
+  }
+
+  return number
+}
+
 function confirmEndTime() {
   endTimeConfirmed.value = true
 }
 
 function addProblem(problem) {
-  form.problem_ids.push(problem.id)
+  form.problemIds.push(problem.id)
   problemKeyword.value = ''
 }
 
 function removeProblem(problemId) {
-  form.problem_ids = form.problem_ids.filter((id) => id !== problemId)
+  form.problemIds = form.problemIds.filter((id) => id !== problemId)
+}
+
+function moveProblem(index, direction) {
+  const destination = index + direction
+
+  if (destination < 0 || destination >= form.problemIds.length) {
+    return
+  }
+
+  const currentProblemId = form.problemIds[index]
+  form.problemIds[index] = form.problemIds[destination]
+  form.problemIds[destination] = currentProblemId
 }
 
 function showSubmitError(message) {
@@ -474,7 +521,7 @@ async function handleSubmit() {
     return
   }
 
-  if (form.problem_ids.length === 0) {
+  if (form.problemIds.length === 0) {
     submitError.value = '请至少选择一道竞赛题目。'
     return
   }
@@ -482,11 +529,14 @@ async function handleSubmit() {
   const payload = {
     name: form.name.trim(),
     visibility: form.visibility,
-    ...(!form.visibility ? { password: form.password } : {}),
+    password: form.visibility ? '' : form.password,
     start_time: toRFC3339(form.startTime),
     end_time: toRFC3339(form.endTime),
     announcement: form.announcement.trim(),
-    problem_ids: form.problem_ids
+    problems: form.problemIds.map((problemId, index) => ({
+      problem_number: problemNumber(index),
+      problem_id: problemId
+    }))
   }
 
   submitting.value = true
@@ -520,5 +570,9 @@ onMounted(loadProblems)
 .search-results {
   max-height: 16rem;
   overflow-y: auto;
+}
+
+.selected-problem-number {
+  min-width: 2.25rem;
 }
 </style>

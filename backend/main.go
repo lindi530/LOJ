@@ -13,6 +13,7 @@ import (
 	"GO1/pkg/translator"
 	"GO1/pkg/validator"
 	"GO1/routers"
+	"GO1/service/competition_service"
 	"GO1/service/match_service"
 	"GO1/service/mq_service/ac_calendar_mq"
 	"GO1/service/ws_service"
@@ -66,6 +67,7 @@ func syncInitialData() {
 
 func startServer() {
 	match_service.StartMatchConsumer()
+	competition_service.StartCompetitionSubmitConsumer()
 	startHTTPServer() // 必须在最后
 }
 

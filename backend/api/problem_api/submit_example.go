@@ -5,8 +5,9 @@ import (
 	"GO1/models/problem_model"
 	"GO1/pkg/jwt"
 	"GO1/service/problem_service"
-	"github.com/gin-gonic/gin"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (ProblemAPI) SubmitExample(c *gin.Context) {
@@ -15,7 +16,7 @@ func (ProblemAPI) SubmitExample(c *gin.Context) {
 		response.FailWithMessage("解析信息失败", c)
 		return
 	}
-	if ok := isSafeCode(exampleSubmit.Code, exampleSubmit.Language); !ok {
+	if ok := IsSafeCode(exampleSubmit.Code, exampleSubmit.Language); !ok {
 		response.FailWithMessage("不安全代码", c)
 		return
 	}

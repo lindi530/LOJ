@@ -15,6 +15,7 @@ import SubmissionDetail from '@/components/coding/SubmissionDetail.vue'
 import Competition from '@/views/CompetitionView.vue'
 import CompetitionCreate from '@/views/CompetitionCreateView.vue'
 import CompetitionDetail from '@/views/CompetitionDetailView.vue'
+import CompetitionProblem from '@/views/CompetitionProblemView.vue'
 import store from '@/store'
 
 const routes = [
@@ -84,6 +85,11 @@ const routes = [
     path: '/competition/create',
     name: 'CompetitionCreate',
     component: CompetitionCreate
+  },
+  {
+    path: '/competition/:competition_id/:problem_number',
+    name: 'CompetitionProblem',
+    component: CompetitionProblem
   },
   {
     path: '/competition/:competition_id',

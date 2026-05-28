@@ -7,9 +7,17 @@
           :options="langOptions"
           style="width: 120px"
           size="small"
+          :disabled="!langOptions.length"
         />
-        <n-button size="small" @click="toggleTheme" tertiary>
-          {{ theme === 'vs-light' ? '切换深色' : '切换浅色' }}
+        <n-button
+          size="small"
+          tertiary
+          circle
+          :aria-label="editorTheme === 'vs-light' ? '切换深色主题' : '切换浅色主题'"
+          :title="editorTheme === 'vs-light' ? '切换深色主题' : '切换浅色主题'"
+          @click="toggleTheme"
+        >
+          <i class="bi" :class="editorTheme === 'vs-light' ? 'bi-moon-stars' : 'bi-sun'" aria-hidden="true"></i>
         </n-button>
       </n-space>
     </template>
@@ -19,22 +27,22 @@
       <MonacoEditor
         v-if="editorReady"
         v-model:value="internalCode"
-        :language="internalLang"
-        :theme="theme"
+        :language="monacoLanguage"
+        :theme="editorTheme"
         height="100%"
         :options="editorOptions"
       />
     </div>
 
-    <div class="d-flex justify-content-between">
-      <n-button @click="resetCode">重置代码</n-button>
-      <n-button 
-        type="primary" 
-        @click="submitCode"
-        :disabled="isLoading"
-        :class="{ 'opacity-50 cursor-not-allowed': isLoading }"
+    <div class="d-flex justify-content-start align-items-center mb-3">
+      <n-button
+        circle
+        tertiary
+        aria-label="重置代码"
+        title="重置代码"
+        @click="resetCode"
       >
-        {{ isLoading ? '提交中...' : '提交' }}
+        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
       </n-button>
     </div>
 
@@ -45,17 +53,31 @@
       @handleActiveStatus="handleActiveStatus"
       @handleTestSample="handleTestSample"
       @handleRunExample="handleRunExample"
-    />
+    >
+      <template #actions>
+        <n-button
+          type="primary"
+          class="editor-submit-button"
+          @click="submitCode"
+          :disabled="isLoading"
+          :class="{ 'opacity-50': isLoading }"
+        >
+          <i class="bi bi-cloud-arrow-up me-1" aria-hidden="true"></i>
+          {{ isLoading ? '提交中...' : '提交代码' }}
+        </n-button>
+      </template>
+    </SampleTest>
   </n-card>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { NCard, NSelect, NButton, NSpace, useMessage } from 'naive-ui'
 import { useIntersectionObserver } from '@vueuse/core'
 import api from '@/api'
 import SampleTest from './SampleTest.vue'
 import { useWebSocketContext } from '@/composables/useWebSocket.js'
+import { defaultCodeFor, toLanguageOptions, toMonacoLanguage } from '@/utils/languageOptions'
 
 const MonacoEditor = defineAsyncComponent(() => import('monaco-editor-vue3'))
 
@@ -63,21 +85,24 @@ const MonacoEditor = defineAsyncComponent(() => import('monaco-editor-vue3'))
 const props = defineProps({
   problemId: Number,
   roomId: String,
+  languages: {
+    type: [Array, Object, String],
+    default: () => []
+  },
+  theme: {
+    type: String,
+    default: 'vs-light'
+  }
 })
 
-console.log("codeEditor roomId:", props.problemId, "  ", props.roomId );
+const emit = defineEmits(['update:theme'])
 
-const langOptions = [
-  { label: 'C++', value: 'cpp' },
-  { label: 'Python3', value: 'python' },
-  { label: 'Go', value: 'go' }
-]
+const langOptions = computed(() => toLanguageOptions(props.languages))
 
-const internalLang = ref('cpp')
+const internalLang = ref('')
 const internalCode = ref('')
 const editorReady = ref(false)
 const editorContainer = ref(null)
-const theme = ref('vs-light')
 const userEdited = ref(false)
 const message = useMessage()
 const isEditorVisible = ref(true)
@@ -86,14 +111,8 @@ const isLoading = ref(false)
 const activeStatus = ref('')
 const outputValue = ref('')
 const { registerSubmitCodeCallback } = useWebSocketContext()
-
-function defaultCode(lang) {
-  return {
-    cpp: `#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n  return 0;\n}`,
-    python: `class Solution:\n    def twoSum(self, nums, target):\n        pass`,
-    go: `package main\n\nimport(\n  \"fmt\"\n)\n\nfunc main() {\n}`
-  }[lang] || ''
-}
+const editorTheme = computed(() => props.theme)
+const monacoLanguage = computed(() => toMonacoLanguage(internalLang.value))
 
 const handleTestSample = (value) => {
   testSample.value = value
@@ -124,13 +143,13 @@ const unregister = registerSubmitCodeCallback((msg) => {
 })
 
 function resetCode() {
-  internalCode.value = defaultCode(internalLang.value)
+  internalCode.value = defaultCodeFor(internalLang.value)
   userEdited.value = false
   message.info('代码已重置')
 }
 
 function toggleTheme() {
-  theme.value = theme.value === 'vs-light' ? 'vs-dark' : 'vs-light'
+  emit('update:theme', editorTheme.value === 'vs-light' ? 'vs-dark' : 'vs-light')
 }
 
 async function submitCode() {
@@ -171,8 +190,20 @@ async function submitCode() {
 }
 
 watch(internalLang, (newLang) => {
-  internalCode.value = defaultCode(newLang)
+  internalCode.value = defaultCodeFor(newLang)
 })
+
+watch(langOptions, (options) => {
+  if (!options.length) {
+    internalLang.value = ''
+    internalCode.value = ''
+    return
+  }
+
+  if (!options.some(option => option.value === internalLang.value)) {
+    internalLang.value = options[0].value
+  }
+}, { immediate: true })
 
 watch(internalCode, () => {
   if (!userEdited.value) {
@@ -189,7 +220,7 @@ const editorOptions = {
 }
 
 onMounted(() => {
-  internalCode.value = defaultCode(internalLang.value)
+  internalCode.value = defaultCodeFor(internalLang.value)
   
   const { stop } = useIntersectionObserver(
     editorContainer,
@@ -212,15 +243,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.d-flex {
-  display: flex;
-}
-.justify-content-between {
-  justify-content: space-between;
-}
-.mb-3 {
-  margin-bottom: 12px;
-}
 .editor-container {
   width: 100%;
   height: clamp(300px, 50vh, 520px);
@@ -229,5 +251,9 @@ onMounted(() => {
 :deep(.n-card__content) {
   display: flex;
   flex-direction: column;
+}
+
+.editor-submit-button {
+  min-width: 8.4rem;
 }
 </style>

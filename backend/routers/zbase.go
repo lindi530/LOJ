@@ -36,10 +36,16 @@ func InitRouter() *gin.Engine {
 	AddRouter(router.Group(""))
 
 	router.NoRoute(func(c *gin.Context) {
-		global.Logger.Infof("404 <UNK>")
+		reqURL := c.Request.URL.RequestURI()
+		method := c.Request.Method
+		ip := c.ClientIP()
+
+		global.Logger.Infof("404 Not Found: method=%s url=%s ip=%s", method, reqURL, ip)
+
 		c.JSON(404, gin.H{
 			"code":    404,
 			"message": "Not Found",
+			"url":     reqURL,
 		})
 	})
 	return router

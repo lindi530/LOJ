@@ -135,8 +135,15 @@ export default {
     return request.get(`/problems/submissions/${submissionID}`)
   },
   getCompetitionsByEndStatus(hasEnded, page) {
-    const pagination = page ? `?page=${page}` : ''
-    return request.get(`/competition/${hasEnded}${pagination}`)
+    return request.get('/competition/status', {
+      params: {
+        has_ended: hasEnded,
+        page
+      }
+    })
+  },
+  getCompetition(competitionId) {
+    return request.get(`/competition/${competitionId}`)
   },
   getCompetitionRankList() {
     return request.get('/competition/rank')
@@ -152,6 +159,18 @@ export default {
   },
   hasEnteredCompetition(competitionId) {
     return request.get(`/competition/has_entered/${competitionId}`)
+  },
+  getCompetitionProblems(competitionId) {
+    return request.get(`/competition/problems/${competitionId}`)
+  },
+  getCompetitionProblem(competitionId, problemNumber) {
+    return request.get(`/competition/${competitionId}/${problemNumber}`)
+  },
+  getCompetitionSubmissions(competitionId) {
+    return request.get(`/competition/${competitionId}/submissions`)
+  },
+  submitCompetitionProblem(competitionId, problemNumber, data) {
+    return request.post(`/competition/${competitionId}/${problemNumber}/submit`, data)
   }
   // 这里按需继续扩展接口
 };

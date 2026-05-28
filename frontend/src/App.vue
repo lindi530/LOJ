@@ -64,6 +64,14 @@ import bgImg from "@/assets/1.png";
   margin: 0; /* 清除默认 margin，避免影响布局 */
 }
 
+:global(html[data-loj-editor-theme="dark"] body),
+:global(html[data-loj-editor-theme="dark"] #building) {
+  background: #0b1220;
+}
+
+:global(html[data-loj-editor-theme="dark"] #app) {
+  color: #dbe7f5;
+}
 
 /* NavBar 等样式 */
 nav {

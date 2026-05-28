@@ -7,7 +7,12 @@
       </RouterLink>
 
       <div class="competition-detail-shell">
-        <section v-if="error" class="detail-state text-center" role="alert">
+        <section v-if="loading" class="detail-state text-center" role="status">
+          <span class="spinner-border" aria-hidden="true"></span>
+          <p class="mb-0 mt-3">竞赛详情加载中...</p>
+        </section>
+
+        <section v-else-if="error" class="detail-state text-center" role="alert">
           <i class="bi bi-exclamation-circle detail-state__icon" aria-hidden="true"></i>
           <p class="mb-0">{{ error }}</p>
         </section>
@@ -43,9 +48,6 @@
               :has-started="canViewStartedContent"
               :can-cancel="isUpcoming && registered"
               :canceling="canceling"
-              :problems="problems"
-              :problems-loading="problemsLoading"
-              :problems-error="problemsError"
               :rankings="rankings"
               :rankings-loading="rankingsLoading"
               :rankings-error="rankingsError"
@@ -82,13 +84,11 @@ const route = useRoute()
 const store = useStore()
 const message = useMessage()
 const competition = ref(null)
+const loading = ref(false)
 const error = ref('')
 const registered = ref(false)
 const entering = ref(false)
 const canceling = ref(false)
-const problems = ref([])
-const problemsLoading = ref(false)
-const problemsError = ref('')
 const rankings = ref([])
 const rankingsLoading = ref(false)
 const rankingsError = ref('')
@@ -96,6 +96,7 @@ const loginVisible = ref(false)
 const actionAfterLogin = ref('')
 const now = ref(Date.now())
 const loadedContentCompetitionId = ref('')
+let competitionRequestId = 0
 let clockId = null
 
 const competitionId = computed(() => route.params.competition_id)
@@ -107,34 +108,74 @@ const isRunning = computed(() => competition.value && getCompetitionPhase(compet
 const canViewStartedContent = computed(() => hasStarted.value && (!isRunning.value || registered.value))
 
 async function loadCompetition(detail) {
+  const requestCompetitionId = String(competitionId.value || '')
+  const requestId = ++competitionRequestId
   error.value = ''
   registered.value = false
   resetStartedContent()
 
-  if (!detail || String(detail.id) !== String(competitionId.value)) {
+  if (!requestCompetitionId) {
+    loading.value = false
     competition.value = null
-    error.value = '未获取到竞赛详情，请返回竞赛列表重新进入'
+    error.value = '未获取到竞赛编号'
     return
   }
 
-  competition.value = { ...detail }
-  try {
-    await loadRegisteredStatus()
-  } catch (requestError) {
-    error.value = requestError?.message || '报名状态加载失败'
-    return
+  if (detail && String(detail.id) === requestCompetitionId) {
+    competition.value = { ...detail }
+  } else {
+    competition.value = null
   }
 
-  loadStartedContent()
+  await loadCompetitionDetail(requestCompetitionId, requestId)
 }
 
-async function loadRegisteredStatus() {
+async function loadCompetitionDetail(requestCompetitionId, requestId) {
+  loading.value = !competition.value
+
+  try {
+    const resp = await api.getCompetition(requestCompetitionId)
+    if (requestId !== competitionRequestId) {
+      return
+    }
+
+    const detail = getCompetitionDetail(resp.data)
+    if (resp.code !== 0 || !detail) {
+      competition.value = null
+      error.value = resp.message || '竞赛详情加载失败，请稍后重试'
+      return
+    }
+
+    competition.value = { ...detail }
+    await loadRegisteredStatus(requestCompetitionId)
+  } catch (requestError) {
+    if (requestId === competitionRequestId) {
+      competition.value = null
+      error.value = requestError?.message || '竞赛详情加载失败，请稍后重试'
+    }
+    return
+  } finally {
+    if (requestId === competitionRequestId) {
+      loading.value = false
+    }
+  }
+
+  if (requestId === competitionRequestId) {
+    loadStartedContent()
+  }
+}
+
+function getCompetitionDetail(data) {
+  return data?.competition || data
+}
+
+async function loadRegisteredStatus(requestCompetitionId = competitionId.value) {
   registered.value = false
   if (!isLogin.value) {
     return
   }
 
-  const resp = await api.hasEnteredCompetition(competitionId.value)
+  const resp = await api.hasEnteredCompetition(requestCompetitionId)
   if (resp.code !== 0) {
     throw new Error(resp.message || '报名状态加载失败')
   }
@@ -144,9 +185,6 @@ async function loadRegisteredStatus() {
 
 function resetStartedContent() {
   loadedContentCompetitionId.value = ''
-  problems.value = []
-  problemsLoading.value = false
-  problemsError.value = ''
   rankings.value = []
   rankingsLoading.value = false
   rankingsError.value = ''
@@ -159,37 +197,7 @@ async function loadStartedContent() {
   }
 
   loadedContentCompetitionId.value = currentCompetitionId
-  await Promise.all([loadCompetitionProblems(), loadCompetitionRankings()])
-}
-
-async function loadCompetitionProblems() {
-  if (Array.isArray(competition.value.problems)) {
-    problems.value = competition.value.problems
-    return
-  }
-
-  const problemIds = Array.isArray(competition.value.problem_ids)
-    ? new Set(competition.value.problem_ids.map((id) => String(id)))
-    : new Set()
-
-  if (problemIds.size === 0) {
-    return
-  }
-
-  problemsLoading.value = true
-  problemsError.value = ''
-  try {
-    const resp = await api.getProblemList()
-    if (resp.code === 0 && Array.isArray(resp.data)) {
-      problems.value = resp.data.filter((problem) => problemIds.has(String(problem.id)))
-    } else {
-      problemsError.value = resp.message || '题目加载失败'
-    }
-  } catch (requestError) {
-    problemsError.value = requestError?.message || '题目加载失败'
-  } finally {
-    problemsLoading.value = false
-  }
+  await loadCompetitionRankings()
 }
 
 async function loadCompetitionRankings() {
@@ -300,7 +308,9 @@ function changePlayerCount(amount) {
   }
 }
 
-watch(() => props.competition, loadCompetition, { immediate: true })
+watch([competitionId, () => props.competition], ([, detail]) => {
+  loadCompetition(detail)
+}, { immediate: true })
 watch(canViewStartedContent, (canViewContent) => {
   if (canViewContent) {
     loadStartedContent()

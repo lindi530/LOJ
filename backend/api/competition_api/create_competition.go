@@ -10,7 +10,7 @@ import (
 )
 
 func (CompetitionAPI) CreateCompetition(c *gin.Context) {
-	req := competition_model.CompetitionReq{}
+	req := competition_model.CreateCompetitionReq{}
 
 	jwt.SaveUserInfoFromToken(c)
 

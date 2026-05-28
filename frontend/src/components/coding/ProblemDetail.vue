@@ -1,7 +1,7 @@
 <template>
     <n-card :bordered="false" size="small" style="margin-bottom: 16px;">
       <template #header>
-        <div class="d-flex justify-space-between align-center">
+        <div class="d-flex justify-content-between align-items-center">
           <h2 class="mb-0">{{ problem.title }}</h2>
         </div>
         <!-- <button 
@@ -49,19 +49,51 @@
       <div
         v-for="(ex, idx) in problem.examples"
         :key="idx"
-        class="example-block"
+        class="vstack gap-2 mb-3"
       >
-        <pre><code>输入: {{ ex.input }}{{"\n"}}输出: {{ ex.output }}</code></pre>
+        <div class="sample-block bg-body-tertiary border rounded-3">
+          <div class="sample-header d-flex align-items-center justify-content-between">
+            <span class="small fw-semibold text-body-secondary">输入 {{ idx + 1 }}</span>
+            <button
+              class="btn btn-sm btn-link sample-copy-btn"
+              type="button"
+              :aria-label="`复制示例 ${idx + 1} 输入`"
+              title="复制"
+              @click="copySample(ex.input, `示例 ${idx + 1} 输入`)"
+            >
+              <i class="bi bi-copy" aria-hidden="true"></i>
+            </button>
+          </div>
+          <pre class="m-0 px-3 pb-3 pt-2"><code>{{ ex.input }}</code></pre>
+        </div>
+        <div class="sample-block bg-body-tertiary border rounded-3">
+          <div class="sample-header d-flex align-items-center justify-content-between">
+            <span class="small fw-semibold text-body-secondary">输出 {{ idx + 1 }}</span>
+            <button
+              class="btn btn-sm btn-link sample-copy-btn"
+              type="button"
+              :aria-label="`复制示例 ${idx + 1} 输出`"
+              title="复制"
+              @click="copySample(ex.output, `示例 ${idx + 1} 输出`)"
+            >
+              <i class="bi bi-copy" aria-hidden="true"></i>
+            </button>
+          </div>
+          <pre class="m-0 px-3 pb-3 pt-2"><code>{{ ex.output }}</code></pre>
+        </div>
       </div>
     </n-card>
 </template>
 
 <script setup>
+import { useMessage } from 'naive-ui'
+
+const message = useMessage()
 
 const props = defineProps({
   roomId: {
     type: Number,
-    required: true
+    default: undefined
   },
   problem: {
     type: Object,
@@ -69,7 +101,7 @@ const props = defineProps({
   },
   tab: {
     type: String,
-    required: true
+    default: undefined
   }
 })
 
@@ -80,6 +112,15 @@ const emit = defineEmits(['update:tab'])
 const switchToSubmissions = () => {
   // 触发事件，通知父组件更新activeTab为'submissions'
   emit('update:tab', 'submissions')
+}
+
+async function copySample(text, label) {
+  try {
+    await navigator.clipboard.writeText(text || '')
+    message.success(`${label}已复制`)
+  } catch (error) {
+    message.error('复制失败，请手动选择内容复制')
+  }
 }
 
 function levelTagType(level) {
@@ -97,33 +138,30 @@ function levelTagType(level) {
 </script>
 
 <style scoped>
-.d-flex {
-  display: flex;
+.sample-header {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.75rem 0;
 }
-.justify-space-between {
-  justify-content: space-between;
-}
-.align-center {
+
+.sample-copy-btn {
+  display: inline-flex;
+  width: 1.9rem;
+  height: 1.9rem;
   align-items: center;
-}
-.mb-0 {
-  margin-bottom: 0;
-}
-.mb-3 {
-  margin-bottom: 16px;
+  justify-content: center;
+  padding: 0;
+  color: var(--bs-secondary-color);
+  border-radius: 999px;
+  text-decoration: none;
 }
 
-.example-block {
-  background-color: #f5f5f5;
-  padding: 12px;
-  margin-bottom: 8px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 14px;
+.sample-copy-btn:hover {
+  color: var(--bs-primary);
+  background: var(--bs-tertiary-bg);
+}
+
+.sample-block pre {
+  font: 14px/1.6 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   white-space: pre-wrap;
-}
-
-* {
-  box-sizing: border-box;
 }
 </style>

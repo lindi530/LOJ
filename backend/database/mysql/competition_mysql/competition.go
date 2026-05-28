@@ -27,3 +27,12 @@ func GetCompetitions(hasEnded bool, page, pageSize int) (data []*competition_mod
 
 	return
 }
+
+func GetCompetition(competitionID int64) (data competition_model.Competition, err error) {
+	err = global.DB.
+		Select("*").
+		Where("id = ?", competitionID).
+		First(&data).Error
+
+	return
+}

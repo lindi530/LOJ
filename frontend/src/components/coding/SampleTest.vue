@@ -14,24 +14,36 @@
         </span>
       </div>
     </template>
-    <n-input
-      v-model:value="input"
-      type="textarea"
-      rows="3"
-      placeholder=""
-      class="mb-2"
-    />
-    <div class="d-flex justify-content-between mb-2">
-      <n-button type="success" @click="runFunction">运行</n-button>
+    <div class="sample-test-grid">
+      <label class="sample-test-field">
+        <span class="sample-test-label">输入</span>
+        <n-input
+          v-model:value="input"
+          type="textarea"
+          rows="3"
+          placeholder=""
+          class="sample-test-control"
+        />
+      </label>
+
+      <div class="sample-test-field">
+        <span class="sample-test-label">输出</span>
+        <n-card
+          size="small"
+          :segmented="{ content: true }"
+          class="sample-test-output"
+        >
+          <pre class="result-text">{{ outputValue || '运行后将在这里显示输出。' }}</pre>
+        </n-card>
+      </div>
     </div>
 
-    <n-card
-      size="small"
-      :segmented="{ content: true }"
-      style="max-height: 120px; overflow: auto"
-    >
-      <pre class="result-text">{{ outputValue }}</pre>
-    </n-card>
+    <div class="sample-test-actions mt-2">
+      <n-button class="sample-run-button" type="success" @click="runFunction">
+        <i class="bi bi-play-fill me-1" aria-hidden="true"></i>运行样例
+      </n-button>
+      <slot name="actions"></slot>
+    </div>
   </n-card>
 </template>
 
@@ -83,15 +95,44 @@ const statusClass = computed(() => {
   margin: 0;
   font-size: 13px;
 }
-.d-flex {
+.sample-test-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.sample-test-field {
+  display: block;
+  min-width: 0;
+}
+
+.sample-test-label {
+  display: block;
+  margin-bottom: 0.38rem;
+  color: var(--bs-secondary-color, #6c757d);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+:deep(.sample-test-control textarea),
+:deep(.sample-test-output .n-card__content) {
+  height: 88px;
+}
+
+:deep(.sample-test-output .n-card__content) {
+  overflow: auto;
+}
+
+.sample-run-button {
+  min-width: 8.4rem;
+}
+
+.sample-test-actions {
   display: flex;
+  gap: 0.62rem;
+  justify-content: flex-end;
 }
-.justify-content-between {
-  justify-content: space-between;
-}
-.mb-2 {
-  margin-bottom: 8px;
-}
+
 .n-card--success :deep(.n-card__header) {
   color: #2e7d32;
 }
@@ -116,5 +157,19 @@ const statusClass = computed(() => {
 }
 .status-run {
   color: #337AB7; /* 运行蓝色 */
+}
+
+@media (max-width: 767.98px) {
+  .sample-test-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sample-test-actions {
+    flex-direction: column;
+  }
+
+  .sample-test-actions :deep(.n-button) {
+    width: 100%;
+  }
 }
 </style>

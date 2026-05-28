@@ -1,16 +1,15 @@
 <template>
   <div
-    class="container px-5 py-4"
-    :class="{ 'custom-container': roomId === undefined }"
-    style="height: 100%; overflow-y: auto;"
+    class="problem-page container-fluid px-4 py-4"
+    :class="pageThemeClass"
+    :data-bs-theme="bootstrapTheme"
   >
-    <div class="row justify-content-center">
-      <div class="col-12">
-        <div class="d-flex" style="gap: 24px;">
-          <!-- 左侧题目区域 -->
-          <div class="flex-fill" style="max-width: 50%;">
+    <div class="row g-4 justify-content-center">
+      <div class="col-12" :class="roomId === undefined ? 'col-xxl-11' : ''">
+        <div class="row g-4">
+          <div class="col-12 col-xl-6">
 
-            <n-card content-style="padding: 0;">
+            <n-card class="problem-surface" content-style="padding: 0;">
               <n-tabs
                 type="line"
                 size="large"
@@ -22,7 +21,6 @@
                     v-if="problem"
                     :problem="problem" 
                     :room-id="roomId"
-                    class="p-4"
                   />
                 </n-tab-pane>
                 <n-tab-pane name="提交记录"
@@ -35,15 +33,15 @@
                 </n-tab-pane>
               </n-tabs>
             </n-card>
-            
-            
           </div>
 
-          <!-- 右侧编辑器+测试 -->
-          <div class="flex-fill" style="max-width: 50%;">
+          <div class="col-12 col-xl-6">
             <CodeEditor 
               :problem-id="problemID"
               :room-id="roomId"
+              :languages="problemLanguageSource"
+              :theme="editorTheme"
+              @update:theme="editorTheme = $event"
             />
           </div>
         </div>
@@ -53,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ProblemDetail from '@/components/coding/ProblemDetail.vue'
 import CodeEditor from '@/components/coding/CodeEditor.vue'
@@ -64,16 +62,20 @@ import api from '@/api'
 const problem = ref(null)
 const loading = ref(true)
 const route = useRoute()
+const editorTheme = ref('vs-light')
+const bootstrapTheme = computed(() => editorTheme.value === 'vs-dark' ? 'dark' : 'light')
+const pageThemeClass = computed(() => editorTheme.value === 'vs-dark' ? 'problem-page--dark' : 'problem-page--light')
+const problemLanguageSource = computed(() => problem.value?.language || problem.value?.languages || problem.value?.constraints || [])
 
 
 const props = defineProps({
   problemId: {
     type: Number,
-    required: true,
+    default: undefined,
   },
   roomId: {
     type: String,
-    required: true,
+    default: undefined,
   },
 
 })
@@ -89,6 +91,14 @@ watch(
     activeTab.value = !newRoomId || newRoomId.trim() === '';
   }
 );
+
+watch(editorTheme, (theme) => {
+  document.documentElement.dataset.lojEditorTheme = theme === 'vs-dark' ? 'dark' : 'light'
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  delete document.documentElement.dataset.lojEditorTheme
+})
 
 // 修复：统一转换为Number类型，避免类型不匹配
 const problemID = ref(
@@ -114,23 +124,42 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.custom-container {
-  max-width: 85%;   /* 宽度可调 */
-  margin: 0 auto;     /* 居中 */
+.problem-page {
+  min-height: calc(100vh - 60px);
+  overflow-y: auto;
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
-/* 移除全局样式污染，避免影响父组件 */
-/* .page-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative; /* 确保在父级堆叠上下文中 
+.problem-page--light {
+  color: #1f2937;
+  background: #f6f8fb;
 }
 
-/* 确保内容区域不被裁剪 
-.container-fluid {
-  padding: 0;
-  margin: 0;
-  height: 100%;
-} */
+.problem-page--dark {
+  color: #dbe7f5;
+  background: #0b1220;
+}
+
+.problem-page--dark :deep(.n-card),
+.problem-page--dark :deep(.n-tabs-pane-wrapper) {
+  color: #dbe7f5;
+  background-color: #111827;
+  border-color: #243247;
+}
+
+.problem-page--dark :deep(.n-card-header),
+.problem-page--dark :deep(.n-tabs-tab__label),
+.problem-page--dark :deep(.n-tabs-nav-scroll-content) {
+  color: #edf4ff;
+}
+
+.problem-page--dark :deep(.n-card .n-card),
+.problem-page--dark :deep(.bg-body-tertiary) {
+  background-color: #162235 !important;
+  border-color: #2c3a50 !important;
+}
+
+.problem-page--dark :deep(.text-body-secondary) {
+  color: #9fb0c5 !important;
+}
 </style>

@@ -5,8 +5,9 @@ import (
 	"GO1/models/problem_model"
 	"GO1/pkg/jwt"
 	"GO1/service/problem_service"
-	"github.com/gin-gonic/gin"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (ProblemAPI) SubmitCode(c *gin.Context) {
@@ -25,7 +26,7 @@ func (ProblemAPI) SubmitCode(c *gin.Context) {
 
 	codeSubmission.ProblemID = uint(problemID)
 
-	if ok := isSafeCode(codeSubmission.Code, codeSubmission.Language); !ok {
+	if ok := IsSafeCode(codeSubmission.Code, codeSubmission.Language); !ok {
 		response.FailWithMessage("不安全代码", c)
 		return
 	}

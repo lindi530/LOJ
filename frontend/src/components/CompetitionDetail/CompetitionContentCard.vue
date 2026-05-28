@@ -21,6 +21,15 @@
       <RouterLink
         v-if="hasStarted"
         class="content-card__tab"
+        :to="tabTarget('#submissions')"
+        :class="{ 'content-card__tab--active': activeTab === 'submissions' }"
+        :aria-current="activeTab === 'submissions' ? 'page' : undefined"
+      >
+        提交记录
+      </RouterLink>
+      <RouterLink
+        v-if="hasStarted"
+        class="content-card__tab"
         :to="tabTarget('#ranklist')"
         :class="{ 'content-card__tab--active': activeTab === 'ranking' }"
         :aria-current="activeTab === 'ranking' ? 'page' : undefined"
@@ -34,16 +43,11 @@
     </section>
 
     <section v-else-if="activeTab === 'problems'" class="content-card__panel" aria-label="竞赛题目内容">
-      <p v-if="problemsLoading" class="content-card__state">题目加载中...</p>
-      <p v-else-if="problemsError" class="content-card__state content-card__state--error">{{ problemsError }}</p>
-      <p v-else-if="problems.length === 0" class="content-card__state">暂无可展示题目。</p>
-      <ol v-else class="content-card__problems">
-        <li v-for="problem in problems" :key="problem.id">
-          <span class="content-card__problem-id">#{{ problem.id }}</span>
-          <strong>{{ problem.title || '无标题' }}</strong>
-          <span v-if="problem.level" class="content-card__tag">{{ problem.level }}</span>
-        </li>
-      </ol>
+      <CompetitionProblems :competition-id="competition.id" />
+    </section>
+
+    <section v-else-if="activeTab === 'submissions'" class="content-card__panel" aria-label="竞赛提交记录">
+      <CompetitionSubmissions :competition-id="competition.id" />
     </section>
 
     <section v-else class="content-card__panel" aria-label="竞赛榜单内容">
@@ -74,6 +78,8 @@
 <script setup>
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import CompetitionProblems from './CompetitionProblems.vue'
+import CompetitionSubmissions from './CompetitionSubmissions.vue'
 
 const props = defineProps({
   competition: {
@@ -91,18 +97,6 @@ const props = defineProps({
   canceling: {
     type: Boolean,
     default: false
-  },
-  problems: {
-    type: Array,
-    default: () => []
-  },
-  problemsLoading: {
-    type: Boolean,
-    default: false
-  },
-  problemsError: {
-    type: String,
-    default: ''
   },
   rankings: {
     type: Array,
@@ -131,6 +125,10 @@ const activeTab = computed(() => {
     return 'ranking'
   }
 
+  if (props.hasStarted && route.hash === '#submissions') {
+    return 'submissions'
+  }
+
   return 'announcement'
 })
 
@@ -143,7 +141,7 @@ function tabTarget(hash) {
 }
 
 watch(() => props.hasStarted, (hasStarted) => {
-  if (!hasStarted && (route.hash === '#problem' || route.hash === '#ranklist')) {
+  if (!hasStarted && ['#problem', '#submissions', '#ranklist'].includes(route.hash)) {
     router.replace(tabTarget(''))
   }
 }, { immediate: true })
@@ -224,7 +222,6 @@ watch(() => props.hasStarted, (hasStarted) => {
   color: #bf5454;
 }
 
-.content-card__problems,
 .content-card__ranking {
   display: grid;
   gap: 0.8rem;
@@ -233,7 +230,6 @@ watch(() => props.hasStarted, (hasStarted) => {
   list-style: none;
 }
 
-.content-card__problems li,
 .content-card__ranking li {
   display: flex;
   gap: 1rem;
@@ -244,20 +240,6 @@ watch(() => props.hasStarted, (hasStarted) => {
   background: #f7fafb;
   border: 1px solid #edf1f5;
   border-radius: 0.52rem;
-}
-
-.content-card__problem-id {
-  color: #798ba1;
-  font-variant-numeric: tabular-nums;
-}
-
-.content-card__tag {
-  padding: 0.18rem 0.55rem;
-  margin-left: auto;
-  color: #13866c;
-  font-size: 0.82rem;
-  background: #e9f8f3;
-  border-radius: 999px;
 }
 
 .content-card__place {

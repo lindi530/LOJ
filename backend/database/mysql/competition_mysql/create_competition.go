@@ -7,16 +7,17 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateCompetition(competition *competition_model.Competition, problemIDs []int) error {
+func CreateCompetition(competition *competition_model.Competition, problems []competition_model.CreateCompetitionProblem) error {
 	return global.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(competition).Error; err != nil {
 			return err
 		}
 
-		for _, problemID := range problemIDs {
+		for _, problem := range problems {
 			if err := tx.Create(&competition_model.CompetitionProblem{
 				CompetitionID: competition.ID,
-				ProblemID:     problemID,
+				ProblemID:     problem.ProblemID,
+				ProblemNumber: problem.ProblemNumber,
 			}).Error; err != nil {
 				return err
 			}

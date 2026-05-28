@@ -28,7 +28,7 @@ func InitRabbitMQ() {
 		log.Fatalf("RabbitMQ channel error: %v", err)
 	}
 
-	for _, queueName := range []string{"match_queue", "ac_calendar"} {
+	for _, queueName := range []string{"match_queue", "ac_calendar", "competition_submit_queue"} {
 		_, err = MQChannel.QueueDeclare(
 			queueName,
 			true,

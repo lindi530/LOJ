@@ -27,9 +27,34 @@ func GetProblemDetails(id uint) (resp response.Response) {
 		return
 	}
 
+	constraints, err := mysql.GetProblemConstraintList(id)
+	if err != nil {
+		resp.Code = 1
+		resp.Message = "读取题目信息失败"
+		return
+	}
+	for _, constraint := range constraints {
+		problemDetail.Language = append(problemDetail.Language, constraint.Language)
+		switch constraint.Language {
+		case "cpp":
+			problemDetail.Constraints.Cpp = problemConstraintToResponse(constraint)
+		case "python":
+			problemDetail.Constraints.Python = problemConstraintToResponse(constraint)
+		case "go":
+			problemDetail.Constraints.Go = problemConstraintToResponse(constraint)
+		}
+	}
+
 	resp.Code = 0
 	resp.Data = problemDetail
 	resp.Message = "读取题目信息成功"
 
 	return
+}
+
+func problemConstraintToResponse(constraint models.ProblemConstraint) models.Constraint {
+	return models.Constraint{
+		TimeLimit:   constraint.TimeLimit,
+		MemoryLimit: constraint.MemoryLimit,
+	}
 }

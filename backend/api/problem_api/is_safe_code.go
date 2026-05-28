@@ -2,8 +2,8 @@ package problem_api
 
 import "strings"
 
-// 代码安全检查
-func isSafeCode(code, language string) bool {
+func IsSafeCode(code, language string) bool {
+	language = strings.ToLower(language)
 	dangerMap := map[string][]string{
 		"c":      {"system", "exec", "fork", "popen"},
 		"cpp":    {"system", "exec", "fork", "popen"},

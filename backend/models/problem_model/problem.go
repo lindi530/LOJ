@@ -27,6 +27,7 @@ type Problem struct {
 	OutputDesc  string `json:"output_desc"`
 
 	Constraints Constraints `json:"constraints" gorm:"-"`
+	Language    []string    `json:"language" gorm:"-"`
 	SubmitCount int         `json:"submit_count" gorm:"-"`
 	AcCount     int         `json:"ac_count" gorm:"-"`
 

@@ -13,3 +13,14 @@ func GetProblemConstraints(problemId64 int64, language string, constraint *probl
 	}
 	return nil
 }
+
+func GetProblemConstraintList(problemId uint) ([]problem_model.ProblemConstraint, error) {
+	var constraints []problem_model.ProblemConstraint
+	if err := global.DB.
+		Select("time_limit, memory_limit, language").
+		Where("problem_id = ?", problemId).
+		Find(&constraints).Error; err != nil {
+		return nil, errors.New("查询题目限制失败")
+	}
+	return constraints, nil
+}

@@ -352,6 +352,36 @@ function handleLoginSuccess() {
   color: #b02a37 !important;
 }
 
+:global(html[data-loj-editor-theme="dark"] .loj-navbar) {
+  background: #0b1220;
+  border-bottom-color: #243247;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
+}
+
+:global(html[data-loj-editor-theme="dark"] .loj-brand),
+:global(html[data-loj-editor-theme="dark"] .nav-link-button),
+:global(html[data-loj-editor-theme="dark"] .auth-link),
+:global(html[data-loj-editor-theme="dark"] .user-menu) {
+  color: #dbe7f5 !important;
+}
+
+:global(html[data-loj-editor-theme="dark"] .nav-icon-btn),
+:global(html[data-loj-editor-theme="dark"] .user-menu),
+:global(html[data-loj-editor-theme="dark"] .navbar-toggler) {
+  background-color: #111827;
+  border-color: #2c3a50;
+}
+
+:global(html[data-loj-editor-theme="dark"] .dropdown-menu) {
+  color: #dbe7f5;
+  background-color: #111827;
+  border-color: #2c3a50;
+}
+
+:global(html[data-loj-editor-theme="dark"] .dropdown-item) {
+  color: #dbe7f5 !important;
+}
+
 @keyframes fadeInDown {
   from {
     opacity: 0;

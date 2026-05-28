@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateCompetition(c *gin.Context, req *competition_model.CompetitionReq) (resp response.Response) {
+func CreateCompetition(c *gin.Context, req *competition_model.CreateCompetitionReq) (resp response.Response) {
 	userID, exists := c.Get(constants.LoginUserIDKey)
 	if !exists {
 		resp.Code = 1
@@ -43,7 +43,7 @@ func CreateCompetition(c *gin.Context, req *competition_model.CompetitionReq) (r
 		Announcement: req.Announcement,
 	}
 
-	if err := competition_mysql.CreateCompetition(competition, req.ProblemIDs); err != nil {
+	if err := competition_mysql.CreateCompetition(competition, req.Problems); err != nil {
 		resp.Code = 1
 		resp.Message = "竞赛创建失败"
 		return

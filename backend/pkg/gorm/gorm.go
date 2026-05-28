@@ -40,6 +40,7 @@ func InitGorm() {
 		"database/sql/competitions.sql",
 		"database/sql/competition_players.sql",
 		"database/sql/competition_problems.sql",
+		"database/sql/competition_submissions.sql",
 	}
 
 	for _, file := range files {

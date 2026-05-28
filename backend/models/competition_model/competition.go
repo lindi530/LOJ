@@ -24,6 +24,14 @@ type Competition struct {
 	UpdatedAt time.Time `json:"updated_at" gorm:"column:updated_at;autoUpdateTime"`
 }
 
-type CompetitionResp struct {
+type CompetitionsResp struct {
 	Competitions []*Competition `json:"competitions"`
+}
+
+type GetCompetitionReq struct {
+	CompetitionID int64 `json:"competition_id" uri:"competition_id" binding:"required"`
+}
+
+type CompetitionResp struct {
+	Competitions Competition `json:"competition"`
 }
