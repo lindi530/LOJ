@@ -17,10 +17,11 @@ func CompetitionRouters(router *gin.RouterGroup) {
 	auth.Use(jwt.JWTAuthMiddleware())
 	{
 		auth.POST("/create", api.ApiGroups.CompetitionAPI.CreateCompetition)
-		auth.POST("/enter/:competition_id", api.ApiGroups.CompetitionAPI.EnterCompetition)
-		auth.GET("/has_entered/:competition_id", api.ApiGroups.CompetitionAPI.HasEnterCompetition)
-		auth.GET("/problems/:competition_id", api.ApiGroups.CompetitionAPI.GetCompetitionProblems)
+		auth.POST("/:competition_id/enter", api.ApiGroups.CompetitionAPI.EnterCompetition)
+		auth.GET("/:competition_id/has_entered", api.ApiGroups.CompetitionAPI.HasEnterCompetition)
+		auth.GET("/:competition_id/problems", api.ApiGroups.CompetitionAPI.GetCompetitionProblems)
 		auth.GET("/:competition_id/:problem_number", api.ApiGroups.CompetitionAPI.GetCompetitionProblemInfo)
-		auth.POST("/:competition_id/:problem_number/submit", api.ApiGroups.CompetitionAPI.SubmitCompetitionProblem)
+		auth.POST("/:competition_id/submit/:problem_number", api.ApiGroups.CompetitionAPI.SubmitCompetitionProblem)
+		auth.GET("/:competition_id/submissions", api.ApiGroups.CompetitionAPI.GetCompetitionSubmissions)
 	}
 }

@@ -3,6 +3,7 @@ package competition_api
 import (
 	"GO1/middlewares/response"
 	"GO1/models/competition_model"
+	"GO1/pkg/jwt"
 	"GO1/service/competition_service"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,8 @@ func (CompetitionAPI) GetCompetitionProblems(c *gin.Context) {
 		return
 	}
 
-	resp := competition_service.GetCompetitionProblems(&req)
+	userID := jwt.GetUserIdFromToken(c.GetHeader("Authorization"))
+	resp := competition_service.GetCompetitionProblems(userID, &req)
 	if resp.Code == 1 {
 		response.FailWithMessage(resp.Message, c)
 		return

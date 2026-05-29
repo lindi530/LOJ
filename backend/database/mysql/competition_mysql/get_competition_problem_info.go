@@ -8,7 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetCompetitionProblemInfo(competitionID int64, problemNumber string) (data competition_model.GetCompetitionProblemInfoResp, constraints []problem_model.ProblemConstraint, examples []problem_model.Example, err error) {
+func GetCompetitionProblemInfo(competitionID int64, problemNumber string) (
+	data competition_model.GetCompetitionProblemInfoResp,
+	constraints []problem_model.ProblemConstraint,
+	examples []problem_model.Example,
+	err error) {
 	err = global.DB.Transaction(func(tx *gorm.DB) error {
 		var competitionProblem competition_model.CompetitionProblem
 		if err := tx.

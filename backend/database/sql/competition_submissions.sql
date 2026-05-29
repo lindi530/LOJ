@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS competition_submissions (
     problem_id INT UNSIGNED NOT NULL,
     submission_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
+    is_ac TINYINT(1) NOT NULL DEFAULT 0,
     is_first_ac TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
     KEY idx_competition_user_problem (competition_id, user_id, problem_id),

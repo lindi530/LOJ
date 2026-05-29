@@ -152,25 +152,30 @@ export default {
     return request.post('/competition/create', data)
   },
   enterCompetition(competitionId) {
-    return request.post(`/competition/enter/${competitionId}`)
+    return request.post(`/competition/${competitionId}/enter`)
   },
   cancelCompetitionEntry(competitionId) {
-    return request.delete(`/competition/enter/${competitionId}`)
+    return request.delete(`/competition/${competitionId}/enter`)
   },
   hasEnteredCompetition(competitionId) {
-    return request.get(`/competition/has_entered/${competitionId}`)
+    return request.get(`/competition/${competitionId}/has_entered`)
   },
   getCompetitionProblems(competitionId) {
-    return request.get(`/competition/problems/${competitionId}`)
+    return request.get(`/competition/${competitionId}/problems`)
   },
   getCompetitionProblem(competitionId, problemNumber) {
     return request.get(`/competition/${competitionId}/${problemNumber}`)
   },
-  getCompetitionSubmissions(competitionId) {
-    return request.get(`/competition/${competitionId}/submissions`)
+  getCompetitionSubmissions(competitionId, page, pageSize) {
+    return request.get(`/competition/${competitionId}/submissions`, {
+      params: {
+        page,
+        page_size: pageSize
+      }
+    })
   },
   submitCompetitionProblem(competitionId, problemNumber, data) {
-    return request.post(`/competition/${competitionId}/${problemNumber}/submit`, data)
+    return request.post(`/competition/${competitionId}/submit/${problemNumber}`, data)
   }
   // 这里按需继续扩展接口
 };
