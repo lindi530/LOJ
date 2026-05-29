@@ -4,17 +4,16 @@ import (
 	"GO1/global"
 	"GO1/models/problem_model"
 	"GO1/models/ws_model"
+	"GO1/pkg/constants"
 	"GO1/service/ws_service"
-	"bytes"
-	"fmt"
+	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
 func RunExample(code, language, input string, memoryLimit, timeLimit int, message *ws_model.EditStatus) problem_model.RunResult {
-	ws_service.WsHub.SendEditData(message, "Pending")
+	ws_service.WsHub.SendEditData(message, constants.JudgeStatusPending)
 	// 1. 创建临时目录
 	dir := ""
 	if tempDirEnv := os.Getenv("TEMP_DIR"); tempDirEnv != "" {
@@ -22,85 +21,91 @@ func RunExample(code, language, input string, memoryLimit, timeLimit int, messag
 	}
 	tempDir, err := os.MkdirTemp(dir, "ojcode-*")
 	if err != nil {
-		return problem_model.RunResult{Passed: false, Error: "Cannot create temp directory"}
+		return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusSystemError}
 	}
-	defer os.RemoveAll(tempDir)
+	defer func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			global.Logger.Warn("remove judge temp dir failed: ", tempDir, " err: ", err)
+		}
+	}()
 
 	// 2. 确定文件名、命令和镜像
-	var codeFileName, compileCmd, runCmd, image string
+	var codeFileName, compileCmd, runCmd, image, runtimeSetupCmd string
 
 	switch language {
 	case "cpp":
 		codeFileName = "code.cpp"
 		compileCmd = "g++ /app/code.cpp -o /app/a.out"
-		runCmd = "/app/a.out < /app/input.txt > /app/output.txt"
+		runtimeSetupCmd = "cp /app/a.out /tmp/a.out && chmod +x /tmp/a.out"
+		runCmd = "/tmp/a.out < /app/input.txt > /app/output.txt 2> /app/error.txt"
 		image = "gcc:15"
 	case "python":
 		codeFileName = "code.py"
-		runCmd = "python3 /app/code.py < /app/input.txt > /app/output.txt"
+		runCmd = "python3 /app/code.py < /app/input.txt > /app/output.txt 2> /app/error.txt"
 		image = "python:3.12"
 	case "java":
 		codeFileName = "Main.java"
 		compileCmd = "javac /app/Main.java"
-		runCmd = "java -cp /app Main < /app/input.txt > /app/output.txt"
+		runCmd = "java -cp /app Main < /app/input.txt > /app/output.txt 2> /app/error.txt"
 		image = "openjdk:latest"
 	case "go":
 		codeFileName = "code.go"
 		compileCmd = "go build -o /app/a.out /app/code.go"
-		runCmd = "/app/a.out < /app/input.txt > /app/output.txt"
+		runtimeSetupCmd = "cp /app/a.out /tmp/a.out && chmod +x /tmp/a.out"
+		runCmd = "/tmp/a.out < /app/input.txt > /app/output.txt 2> /app/error.txt"
 		image = "golang:latest"
 	default:
-		return problem_model.RunResult{Passed: false, Error: "Unsupported language"}
+		return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusSystemError}
 	}
 
 	// 3. 写入文件
 	err = os.WriteFile(filepath.Join(tempDir, codeFileName), []byte(code), 0644)
 	if err != nil {
-		return problem_model.RunResult{Passed: false, Error: "Cannot write code file"}
+		return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusSystemError}
 	}
 
 	err = os.WriteFile(filepath.Join(tempDir, "input.txt"), []byte(input), 0644)
 	if err != nil {
-		return problem_model.RunResult{Passed: false, Error: "Cannot write input file"}
+		return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusSystemError}
 	}
 
 	// 4. 构建 docker 命令
-	dockerCmd := buildDockerCmd(image, tempDir, compileCmd, runCmd, memoryLimit, timeLimit)
-	global.Logger.Info("docker command: ", dockerCmd)
-	ws_service.WsHub.SendEditData(message, "Running")
-
-	// 5. 执行命令（无 context）
-	cmd := exec.Command("docker", dockerCmd...)
-
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	err = cmd.Run()
-
-	// 6. 处理退出结果
-	if err != nil {
-		exitErr, ok := err.(*exec.ExitError)
-		if ok {
-			code := exitErr.ExitCode()
-			switch code {
-			case 124:
-				return problem_model.RunResult{Passed: false, Error: "Time Limit Exceeded"}
-			case 137:
-				return problem_model.RunResult{Passed: false, Error: "Memory Limit Exceeded"}
-			default:
-				return problem_model.RunResult{Passed: false, Error: fmt.Sprintf("Runtime Error: %s", stderr.String())}
+	if compileCmd != "" {
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusCompiling)
+		compileContainerName := judgeContainerName(tempDir, "compile")
+		compileDockerCmd := buildDockerShellCmd(image, tempDir, timeLimitedJudgeCommand(compileCmd, judgeCompileTimeLimitSeconds), compileContainerName, 0)
+		global.Logger.Info("docker compile command: ", compileDockerCmd)
+		compileStderr, err := runDockerCommand(compileDockerCmd, judgeCompileTimeout(), compileContainerName)
+		if err != nil {
+			if judgeStatusFromDockerError(err, compileStderr) == constants.JudgeStatusSystemError {
+				return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusSystemError}
 			}
+			return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusCompileError}
 		}
-		return problem_model.RunResult{Passed: false, Error: fmt.Sprintf("Exec Error: %s", err.Error())}
+	}
+
+	if runtimeSetupCmd != "" {
+		runCmd = runtimeSetupCmd + " && " + runCmd
+	}
+	runContainerName := judgeContainerName(tempDir, "run")
+	dockerCmd := buildDockerCmd(image, tempDir, runCmd, runContainerName, memoryLimit, timeLimit)
+	global.Logger.Info("docker command: ", dockerCmd)
+	ws_service.WsHub.SendEditData(message, constants.JudgeStatusRunning)
+	stderr, err := runDockerCommand(dockerCmd, judgeRunTimeout(timeLimit, 1), runContainerName)
+	if err != nil {
+		return problem_model.RunResult{Passed: false, Error: judgeStatusFromDockerError(err, stderr)}
 	}
 
 	// 7. 读取输出文件
-	outBytes, err := os.ReadFile(filepath.Join(tempDir, "output.txt"))
+	outBytes, err := readJudgeOutput(filepath.Join(tempDir, "output.txt"))
 	if err != nil {
-		return problem_model.RunResult{Passed: false, Error: "Cannot read output"}
+		if errors.Is(err, errJudgeOutputLimitExceeded) {
+			return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusOutputLimitExceeded}
+		}
+		return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusSystemError}
 	}
 
-	ws_service.WsHub.SendEditData(message, "Finished")
+	ws_service.WsHub.SendEditData(message, constants.JudgeStatusAccepted)
 
 	return problem_model.RunResult{
 		Passed: true,
@@ -108,23 +113,8 @@ func RunExample(code, language, input string, memoryLimit, timeLimit int, messag
 	}
 }
 
-func buildDockerCmd(image, tempDir, compileCmd, runCmd string, memoryLimit, timeLimit int) []string {
-	timeoutCmd := fmt.Sprintf("timeout %ds %s", timeLimit, runCmd)
-	//timeoutCmd := runCmd
-	var fullCmd string
-	if compileCmd != "" {
-		fullCmd = fmt.Sprintf("%s && %s", compileCmd, timeoutCmd)
-	} else {
-		fullCmd = timeoutCmd
-	}
-	return []string{
-		"run", "--rm",
-		//fmt.Sprintf("--memory=%dm", memoryLimit),
-		"-v", fmt.Sprintf("%s:/app", tempDir),
-		image,
-		"sh", "-c",
-		fullCmd,
-	}
+func buildDockerCmd(image, tempDir, runCmd, containerName string, memoryLimit, timeLimit int) []string {
+	return buildDockerShellCmd(image, tempDir, limitedJudgeCommand(runCmd, timeLimit), containerName, memoryLimit)
 }
 
 //  config 中写了配置

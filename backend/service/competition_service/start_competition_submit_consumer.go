@@ -2,6 +2,7 @@ package competition_service
 
 import (
 	"GO1/global"
+	"GO1/pkg/constants"
 	"encoding/json"
 )
 
@@ -12,7 +13,7 @@ func StartCompetitionSubmitConsumer() {
 	}
 
 	msgs, err := global.MQChannel.Consume(
-		competitionSubmitQueue,
+		constants.CompetitionSubmitQueue,
 		"",
 		false,
 		false,

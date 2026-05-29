@@ -7,6 +7,7 @@ import (
 	"GO1/models/problem_model"
 	"GO1/models/problem_submission_model"
 	"GO1/models/ws_model"
+	"GO1/pkg/constants"
 	"GO1/service/ws_service"
 	"math"
 	"time"
@@ -19,7 +20,7 @@ func SubmitCode(userid int64, codeSubmission problem_model.CodeSubmission, messa
 			Type: ws_model.MessageTypeEditStatus,
 			To:   userid,
 		}
-		ws_service.WsHub.SendEditData(message, "Pending")
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusPending)
 	}
 
 	var examples []problem_model.Example
@@ -31,9 +32,17 @@ func SubmitCode(userid int64, codeSubmission problem_model.CodeSubmission, messa
 		return
 	}
 
+	var constraints problem_model.ProblemConstraint
+	err = problem_mysql.GetProblemConstraints(int64(codeSubmission.ProblemID), codeSubmission.Language, &constraints)
+	if err != nil {
+		resp.Code = 1
+		resp.Message = err.Error()
+		return
+	}
+
 	resp.Code = 0
-	runResult := RunCode(userid, codeSubmission.Code, codeSubmission.Language, &examples, message)
-	msgContent := "Accepted"
+	runResult := RunCode(userid, codeSubmission.Code, codeSubmission.Language, &examples, constraints.MemoryLimit, constraints.TimeLimit, message)
+	msgContent := constants.JudgeStatusAccepted
 	totalCount := len(runResult)
 	acCount := totalCount
 	for _, result := range runResult {
@@ -59,7 +68,7 @@ func SubmitCode(userid int64, codeSubmission problem_model.CodeSubmission, messa
 		CreatedAt: time.Now(),
 	})
 
-	if msgContent == "Accepted" {
+	if msgContent == constants.JudgeStatusAccepted {
 		_ = calendar_redis.SaveACProblem(userid, codeSubmission.ProblemID)
 	}
 

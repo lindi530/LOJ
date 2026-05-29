@@ -7,6 +7,7 @@ import (
 	"GO1/models/problem_model"
 	"GO1/models/saber_model"
 	"GO1/models/ws_model"
+	"GO1/pkg/constants"
 	"GO1/service/problem_service"
 	"GO1/service/ws_service"
 )
@@ -17,7 +18,7 @@ func SaberSubmit(userid int64, submit *saber_model.SaberSubmit) (resp response.R
 		Type: ws_model.MessageTypeEditStatus,
 		To:   userid,
 	}
-	ws_service.WsHub.SendEditData(message, "Pending")
+	ws_service.WsHub.SendEditData(message, constants.JudgeStatusPending)
 
 	room, err := redis.GetSaberRoom(submit.RoomId)
 	if err != nil {

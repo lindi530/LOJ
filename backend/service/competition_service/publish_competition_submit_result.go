@@ -2,6 +2,7 @@ package competition_service
 
 import (
 	"GO1/global"
+	"GO1/pkg/constants"
 	"encoding/json"
 
 	"github.com/streadway/amqp"
@@ -19,7 +20,7 @@ func publishCompetitionSubmitResult(replyTo, correlationID string, result compet
 		false,
 		false,
 		amqp.Publishing{
-			ContentType:   "application/json",
+			ContentType:   constants.CompetitionSubmitContentTypeJSON,
 			CorrelationId: correlationID,
 			Body:          body,
 		},

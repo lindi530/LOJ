@@ -8,13 +8,13 @@ func StartACProblemSenderHourly() {
 
 	time.Sleep(time.Until(nextHour))
 
-	sendACProblemsByTime(time.Now())
+	SendACProblemsByTime(time.Now())
 
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		sendACProblemsByTime(time.Now())
+		SendACProblemsByTime(time.Now())
 	}
 }
 
@@ -24,17 +24,17 @@ func StartACProblemSenderEveryMinute() {
 
 	time.Sleep(time.Until(nextMinute))
 
-	sendACProblemsByTime(time.Now())
+	SendACProblemsByTime(time.Now())
 
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		sendACProblemsByTime(time.Now())
+		SendACProblemsByTime(time.Now())
 	}
 }
 
-func sendACProblemsByTime(sendTime time.Time) {
+func SendACProblemsByTime(sendTime time.Time) {
 	processDate := getProcessDate(sendTime)
 
 	year, month, day := processDate.Date()

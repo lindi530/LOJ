@@ -4,12 +4,7 @@ import (
 	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/competition_model"
-	"time"
-)
-
-const (
-	competitionSubmitQueue   = "competition_submit_queue"
-	competitionSubmitTimeout = 2 * time.Minute
+	"GO1/pkg/constants"
 )
 
 type competitionSubmitJob struct {
@@ -29,7 +24,7 @@ type competitionSubmitResult struct {
 func SubmitCompetitionProblem(userID int64, req *competition_model.SubmitCompetitionProblemReq) (resp response.Response) {
 	if global.MQChannel == nil {
 		resp.Code = 1
-		resp.Message = "judge queue unavailable"
+		resp.Message = constants.CompetitionSubmitMessageJudgeQueueUnavailable
 		return
 	}
 

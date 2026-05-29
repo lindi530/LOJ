@@ -2,6 +2,7 @@ package competition_service
 
 import (
 	"GO1/global"
+	"GO1/pkg/constants"
 	"encoding/json"
 	"time"
 
@@ -23,7 +24,7 @@ func publishCompetitionSubmitJob(job competitionSubmitJob) (competitionSubmitRes
 	}
 
 	correlationID := uuid.NewString()
-	consumerTag := "competition-submit-" + correlationID
+	consumerTag := constants.CompetitionSubmitConsumerTagPrefix + correlationID
 	msgs, err := global.MQChannel.Consume(
 		replyQueue.Name,
 		consumerTag,
@@ -45,11 +46,11 @@ func publishCompetitionSubmitJob(job competitionSubmitJob) (competitionSubmitRes
 
 	if err := global.MQChannel.Publish(
 		"",
-		competitionSubmitQueue,
+		constants.CompetitionSubmitQueue,
 		false,
 		false,
 		amqp.Publishing{
-			ContentType:   "application/json",
+			ContentType:   constants.CompetitionSubmitContentTypeJSON,
 			CorrelationId: correlationID,
 			ReplyTo:       replyQueue.Name,
 			Body:          body,
@@ -58,7 +59,7 @@ func publishCompetitionSubmitJob(job competitionSubmitJob) (competitionSubmitRes
 		return competitionSubmitResult{}, err
 	}
 
-	timer := time.NewTimer(competitionSubmitTimeout)
+	timer := time.NewTimer(constants.CompetitionSubmitTimeout)
 	defer timer.Stop()
 
 	for {

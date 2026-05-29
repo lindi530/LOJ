@@ -5,6 +5,7 @@ import (
 	"GO1/middlewares/response"
 	"GO1/models/problem_model"
 	"GO1/models/ws_model"
+	"GO1/pkg/constants"
 	"GO1/service/ws_service"
 )
 
@@ -13,7 +14,7 @@ func SubmitExample(userid, problemId int64, exampleSubmit problem_model.ExampleS
 		Type: ws_model.MessageTypeEditStatus,
 		To:   userid,
 	}
-	ws_service.WsHub.SendEditData(messageWs, "Pending")
+	ws_service.WsHub.SendEditData(messageWs, constants.JudgeStatusPending)
 	var constraints problem_model.ProblemConstraint
 	err := problem_mysql.GetProblemConstraints(problemId, exampleSubmit.Language, &constraints)
 	if err != nil {

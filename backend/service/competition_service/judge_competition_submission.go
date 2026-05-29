@@ -2,10 +2,14 @@ package competition_service
 
 import (
 	"GO1/database/mysql/competition_mysql"
+	"GO1/database/mysql/problem_mysql"
 	"GO1/database/redis/calendar_redis"
+	"GO1/global"
 	"GO1/models/competition_model"
+	"GO1/models/problem_model"
 	"GO1/models/problem_submission_model"
 	"GO1/models/ws_model"
+	"GO1/pkg/constants"
 	"GO1/service/problem_service"
 	"GO1/service/ws_service"
 	"time"
@@ -16,30 +20,40 @@ func judgeCompetitionSubmission(job competitionSubmitJob) competitionSubmitResul
 		Type: ws_model.MessageTypeEditStatus,
 		To:   job.UserID,
 	}
-	ws_service.WsHub.SendEditData(message, "Pending")
+	ws_service.WsHub.SendEditData(message, constants.JudgeStatusPending)
 
 	competition, competitionProblem, examples, err := competition_mysql.GetCompetitionProblemForSubmit(job.CompetitionID, job.ProblemNumber)
 	if err != nil {
-		ws_service.WsHub.SendEditData(message, "Wrong Answer")
-		return failedCompetitionSubmitResult("data query error")
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
+		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageDataQueryError)
 	}
 
 	now := time.Now()
 	if competition.StartTime.IsZero() || now.Before(competition.StartTime) {
-		ws_service.WsHub.SendEditData(message, "Wrong Answer")
-		return failedCompetitionSubmitResult("competition has not started")
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
+		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageNotStarted)
 	}
 	if !competition.EndTime.IsZero() && now.After(competition.EndTime) {
-		ws_service.WsHub.SendEditData(message, "Wrong Answer")
-		return failedCompetitionSubmitResult("competition has ended")
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
+		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageEnded)
 	}
 	if len(examples) == 0 {
-		ws_service.WsHub.SendEditData(message, "Wrong Answer")
-		return failedCompetitionSubmitResult("test cases not found")
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
+		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageTestCasesNotFound)
 	}
 
-	runResult := problem_service.RunCode(job.UserID, job.Code, job.Language, &examples, message)
+	var constraints problem_model.ProblemConstraint
+	if err := problem_mysql.GetProblemConstraints(int64(competitionProblem.ProblemID), job.Language, &constraints); err != nil {
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
+		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageDataQueryError)
+	}
+
+	runResult := problem_service.RunCode(job.UserID, job.Code, job.Language, &examples, constraints.MemoryLimit, constraints.TimeLimit, message)
+
 	state, score, accepted := summarizeCompetitionRunResult(runResult)
+	state = NormalizeJudgeStatus(state)
+
+	global.Logger.Error("state, score, accepted: ", state, score, accepted)
 
 	problemSubmission := &problem_submission_model.ProblemSubmission{
 		UserId:    job.UserID,
@@ -58,8 +72,8 @@ func judgeCompetitionSubmission(job competitionSubmitJob) competitionSubmitResul
 		accepted,
 	)
 	if err != nil {
-		ws_service.WsHub.SendEditData(message, "Wrong Answer")
-		return failedCompetitionSubmitResult("save submission failed")
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
+		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageSaveSubmissionFailed)
 	}
 
 	if accepted {

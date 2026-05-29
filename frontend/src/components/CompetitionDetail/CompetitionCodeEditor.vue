@@ -185,7 +185,7 @@ const statusClass = computed(() => {
   if (status.includes('accepted') || status.includes('finished') || status.includes('通过')) {
     return 'judge-status--success'
   }
-  if (status.includes('running') || status.includes('运行')) {
+  if (status.includes('running') || status.includes('compiling') || status.includes('运行') || status.includes('编译')) {
     return 'judge-status--running'
   }
   if (status.includes('pending') || status.includes('等待') || status.includes('提交中')) {
@@ -216,6 +216,10 @@ const unregister = registerSubmitCodeCallback((statusMessage) => {
   activeStatus.value = statusMessage.content
   submissionMessage.value = '评测状态已更新。'
 })
+
+function isRequestTimeout(error) {
+  return error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout')
+}
 
 function clearExecutionFeedback() {
   activeStatus.value = ''
@@ -255,7 +259,7 @@ async function runExample() {
 
   runningExample.value = true
   testSample.value = true
-  activeStatus.value = 'Running'
+  activeStatus.value = ''
   outputValue.value = ''
   try {
     const resp = await api.submitExample(props.problemId, {
@@ -272,9 +276,14 @@ async function runExample() {
       return
     }
 
-    activeStatus.value = 'Finished'
     outputValue.value = resp.data?.output ?? ''
   } catch (requestError) {
+    if (isRequestTimeout(requestError)) {
+      outputValue.value = '请求超时，运行状态仍以 WebSocket 推送为准。'
+      message.warning('请求超时，运行状态将继续通过实时推送更新')
+      return
+    }
+
     const failure = requestError?.message || '运行失败，请稍后重试。'
     activeStatus.value = 'Failed'
     outputValue.value = failure
@@ -296,8 +305,8 @@ async function submitCode() {
 
   submitting.value = true
   testSample.value = false
-  activeStatus.value = 'Pending'
-  submissionMessage.value = '代码已发送，正在等待评测。'
+  activeStatus.value = ''
+  submissionMessage.value = '代码已发送，正在等待评测状态推送。'
   try {
     const resp = await api.submitCompetitionProblem(props.competitionId, props.problemNumber, {
       language: language.value,
@@ -312,9 +321,15 @@ async function submitCode() {
       return
     }
 
-    submissionMessage.value = resp.message || '提交成功，等待评测结果。'
+    submissionMessage.value = '提交成功，评测状态将通过实时推送更新。'
     message.success('提交成功')
   } catch (requestError) {
+    if (isRequestTimeout(requestError)) {
+      submissionMessage.value = '提交请求超时，评测状态仍以 WebSocket 推送为准。'
+      message.warning('提交请求超时，评测状态将继续通过实时推送更新')
+      return
+    }
+
     const failure = requestError?.message || '提交失败，请稍后重试。'
     activeStatus.value = 'Failed'
     submissionMessage.value = failure

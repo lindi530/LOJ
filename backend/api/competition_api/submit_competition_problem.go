@@ -5,6 +5,7 @@ import (
 	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/competition_model"
+	"GO1/pkg/constants"
 	"GO1/pkg/jwt"
 	"GO1/service/competition_service"
 
@@ -42,7 +43,7 @@ func (CompetitionAPI) SubmitCompetitionProblem(c *gin.Context) {
 	}
 
 	if ok := problem_api.IsSafeCode(req.Code, req.Language); !ok {
-		response.FailWithMessage("unsafe code", c)
+		response.FailWithMessage(constants.CompetitionSubmitMessageUnsafeCode, c)
 		return
 	}
 

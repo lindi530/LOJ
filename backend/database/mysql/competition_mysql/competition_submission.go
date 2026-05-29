@@ -6,6 +6,7 @@ import (
 	"GO1/models/problem_model"
 	"GO1/models/problem_submission_model"
 	"GO1/models/user_ac_problem"
+	"GO1/pkg/constants"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -32,7 +33,7 @@ func SaveCompetitionJudgeResult(
 			if err := tx.
 				Table("competition_submissions AS cs").
 				Joins("JOIN problem_submissions AS ps ON ps.id = cs.submission_id").
-				Where("cs.competition_id = ? AND cs.problem_id = ? AND cs.user_id = ? AND ps.state = ?", competitionID, problemID, userID, "Accepted").
+				Where("cs.competition_id = ? AND cs.problem_id = ? AND cs.user_id = ? AND ps.state = ?", competitionID, problemID, userID, constants.JudgeStatusAccepted).
 				Count(&acceptedCount).Error; err != nil {
 				return err
 			}

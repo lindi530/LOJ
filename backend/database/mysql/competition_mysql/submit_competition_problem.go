@@ -4,6 +4,7 @@ import (
 	"GO1/global"
 	"GO1/models/competition_model"
 	"GO1/models/problem_model"
+	"GO1/pkg/constants"
 
 	"gorm.io/gorm"
 )
@@ -42,7 +43,7 @@ func HasAcceptedCompetitionProblem(competitionID int64, problemID int, userID in
 	err := global.DB.
 		Table("competition_submissions AS cs").
 		Joins("JOIN problem_submissions AS ps ON ps.id = cs.submission_id").
-		Where("cs.competition_id = ? AND cs.problem_id = ? AND cs.user_id = ? AND ps.state = ?", competitionID, problemID, userID, "Accepted").
+		Where("cs.competition_id = ? AND cs.problem_id = ? AND cs.user_id = ? AND ps.state = ?", competitionID, problemID, userID, constants.JudgeStatusAccepted).
 		Count(&count).Error
 
 	return count > 0, err
