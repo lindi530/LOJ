@@ -1,35 +1,35 @@
 package competition_service
 
 import (
+	"time"
+
 	"GO1/database/mysql/competition_mysql"
-	"GO1/database/redis/competition_redis"
 	"GO1/middlewares/response"
 	"GO1/models/competition_model"
 	"GO1/models/problem_model"
-	"time"
+	"GO1/pkg/constants"
 )
 
 func GetCompetitionProblemInfo(req *competition_model.GetCompetitionProblemInfoReq) (resp response.Response) {
 	now := time.Now()
-	hasOver, msg, cacheEndTime, useCache := HasOver(req.CompetitionID, now)
+	hasOver, msg := HasOver(req.CompetitionID, now)
 	if hasOver {
 		resp.Code = 1
 		resp.Message = msg
 		return
 	}
 
-	if useCache {
-		problem, cacheHit, cacheErr := competition_redis.GetCompetitionProblemInfo(req.CompetitionID, req.ProblemNumber)
-		if cacheErr == nil && cacheHit {
-			resp.Data = problem
-			return
-		}
-	}
-
-	problem, constraints, examples, err := competition_mysql.GetCompetitionProblemInfo(req.CompetitionID, req.ProblemNumber)
+	problemID, err := getCompetitionProblemID(req.CompetitionID, req.ProblemNumber, now)
 	if err != nil {
 		resp.Code = 1
-		resp.Message = "数据查询错误"
+		resp.Message = constants.CompetitionSubmitMessageDataQueryError
+		return
+	}
+
+	problem, constraints, examples, err := competition_mysql.GetCompetitionProblemInfoByID(problemID)
+	if err != nil {
+		resp.Code = 1
+		resp.Message = constants.CompetitionSubmitMessageDataQueryError
 		return
 	}
 
@@ -46,16 +46,6 @@ func GetCompetitionProblemInfo(req *competition_model.GetCompetitionProblemInfoR
 	}
 
 	problem.Examples = examples
-
-	if useCache {
-		_ = competition_redis.SaveCompetitionProblemInfo(
-			req.CompetitionID,
-			req.ProblemNumber,
-			problem,
-			cacheEndTime.Sub(now),
-		)
-	}
-
 	resp.Data = problem
 	return
 }

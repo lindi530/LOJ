@@ -10,7 +10,7 @@ import (
 func GetCompetitionProblems(userID int64, req *competition_model.GetCompetitionProblemsReq) (resp response.Response) {
 
 	now := time.Now()
-	hasOver, msg, _, _ := HasOver(req.CompetitionID, now)
+	hasOver, msg := HasOver(req.CompetitionID, now)
 	if hasOver {
 		resp.Code = 1
 		resp.Message = msg

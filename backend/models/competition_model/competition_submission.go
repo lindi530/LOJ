@@ -8,5 +8,6 @@ type CompetitionSubmission struct {
 	SubmissionID  int64 `json:"submission_id" gorm:"column:submission_id"`
 	UserID        int64 `json:"user_id" gorm:"column:user_id"`
 
+	IsAC      bool `json:"is_ac" gorm:"column:is_ac"`
 	IsFirstAC bool `json:"is_first_ac" gorm:"column:is_first_ac"`
 }

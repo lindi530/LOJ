@@ -145,8 +145,8 @@ export default {
   getCompetition(competitionId) {
     return request.get(`/competition/${competitionId}`)
   },
-  getCompetitionRankList() {
-    return request.get('/competition/rank')
+  getCompetitionRankList(competitionId) {
+    return request.get(`/competition/${competitionId}/ranking_list`)
   },
   createCompetition(data) {
     return request.post('/competition/create', data)
@@ -166,11 +166,12 @@ export default {
   getCompetitionProblem(competitionId, problemNumber) {
     return request.get(`/competition/${competitionId}/${problemNumber}`)
   },
-  getCompetitionSubmissions(competitionId, page, pageSize) {
+  getCompetitionSubmissions(competitionId, page, pageSize, problemNumber = '') {
     return request.get(`/competition/${competitionId}/submissions`, {
       params: {
         page,
-        page_size: pageSize
+        page_size: pageSize,
+        ...(problemNumber ? { problem_number: problemNumber } : {})
       }
     })
   },

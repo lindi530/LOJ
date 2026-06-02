@@ -9,8 +9,8 @@ type ProblemSubmission struct {
 	Language    string    `json:"language"`
 	Code        string    `json:"code"`
 	State       string    `json:"state"`
-	ExecTime    int       `json:"exec_time"`
-	MemoryUsage int       `json:"memory_usage"`
+	ExecTime    int       `json:"exec_time"`    // ms
+	MemoryUsage int       `json:"memory_usage"` // KB
 	Score       float64   `json:"score"`
 	CreatedAt   time.Time `json:"created_at"`
 }

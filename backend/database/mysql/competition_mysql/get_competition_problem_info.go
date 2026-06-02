@@ -8,35 +8,26 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetCompetitionProblemInfo(competitionID int64, problemNumber string) (
+func GetCompetitionProblemInfoByID(problemID int) (
 	data competition_model.GetCompetitionProblemInfoResp,
 	constraints []problem_model.ProblemConstraint,
 	examples []problem_model.Example,
 	err error) {
 	err = global.DB.Transaction(func(tx *gorm.DB) error {
-		var competitionProblem competition_model.CompetitionProblem
-		if err := tx.
-			Table("competition_problems").
-			Select("problem_id").
-			Where("competition_id = ? AND problem_number = ?", competitionID, problemNumber).
-			Take(&competitionProblem).Error; err != nil {
-			return err
-		}
-
 		if err := tx.
 			Table("problems").
 			Select("title, description, input_desc, output_desc").
-			Where("id = ?", competitionProblem.ProblemID).
+			Where("id = ?", problemID).
 			Take(&data).Error; err != nil {
 			return err
 		}
 
-		constraints, err = getCompetitionProblemConstraints(tx, uint(competitionProblem.ProblemID))
+		constraints, err = getCompetitionProblemConstraints(tx, uint(problemID))
 		if err != nil {
 			return err
 		}
 
-		examples, err = getCompetitionProblemExamples(tx, uint(competitionProblem.ProblemID))
+		examples, err = getCompetitionProblemExamples(tx, uint(problemID))
 		if err != nil {
 			return err
 		}

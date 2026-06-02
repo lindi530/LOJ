@@ -152,7 +152,7 @@ function goToCompetition(competition) {
 onMounted(() => {
   loadOngoingCompetitions()
   loadEndedCompetitions()
-  loadRankings()
+  //loadRankings()
 })
 </script>
 

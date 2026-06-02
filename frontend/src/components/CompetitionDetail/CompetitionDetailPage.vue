@@ -48,9 +48,6 @@
               :has-started="canViewStartedContent"
               :can-cancel="isUpcoming && registered"
               :canceling="canceling"
-              :rankings="rankings"
-              :rankings-loading="rankingsLoading"
-              :rankings-error="rankingsError"
               @cancel="requestCancellation"
             />
           </div>
@@ -89,13 +86,9 @@ const error = ref('')
 const registered = ref(false)
 const entering = ref(false)
 const canceling = ref(false)
-const rankings = ref([])
-const rankingsLoading = ref(false)
-const rankingsError = ref('')
 const loginVisible = ref(false)
 const actionAfterLogin = ref('')
 const now = ref(Date.now())
-const loadedContentCompetitionId = ref('')
 let competitionRequestId = 0
 let clockId = null
 
@@ -112,7 +105,6 @@ async function loadCompetition(detail) {
   const requestId = ++competitionRequestId
   error.value = ''
   registered.value = false
-  resetStartedContent()
 
   if (!requestCompetitionId) {
     loading.value = false
@@ -159,10 +151,6 @@ async function loadCompetitionDetail(requestCompetitionId, requestId) {
       loading.value = false
     }
   }
-
-  if (requestId === competitionRequestId) {
-    loadStartedContent()
-  }
 }
 
 function getCompetitionDetail(data) {
@@ -181,45 +169,6 @@ async function loadRegisteredStatus(requestCompetitionId = competitionId.value) 
   }
 
   registered.value = resp.data?.has_enter === true
-}
-
-function resetStartedContent() {
-  loadedContentCompetitionId.value = ''
-  rankings.value = []
-  rankingsLoading.value = false
-  rankingsError.value = ''
-}
-
-async function loadStartedContent() {
-  const currentCompetitionId = String(competitionId.value)
-  if (!competition.value || !canViewStartedContent.value || loadedContentCompetitionId.value === currentCompetitionId) {
-    return
-  }
-
-  loadedContentCompetitionId.value = currentCompetitionId
-  await loadCompetitionRankings()
-}
-
-async function loadCompetitionRankings() {
-  if (Array.isArray(competition.value.rankings)) {
-    rankings.value = competition.value.rankings
-    return
-  }
-
-  rankingsLoading.value = true
-  rankingsError.value = ''
-  try {
-    const resp = await api.getCompetitionRankList()
-    if (resp.code === 0 && Array.isArray(resp.data)) {
-      rankings.value = resp.data
-    } else {
-      rankingsError.value = resp.message || '榜单加载失败'
-    }
-  } catch (requestError) {
-    rankingsError.value = requestError?.message || '榜单加载失败'
-  } finally {
-    rankingsLoading.value = false
-  }
 }
 
 function requireLogin(action) {
@@ -311,11 +260,6 @@ function changePlayerCount(amount) {
 watch([competitionId, () => props.competition], ([, detail]) => {
   loadCompetition(detail)
 }, { immediate: true })
-watch(canViewStartedContent, (canViewContent) => {
-  if (canViewContent) {
-    loadStartedContent()
-  }
-})
 
 onMounted(() => {
   clockId = window.setInterval(() => {

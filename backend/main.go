@@ -57,6 +57,7 @@ func startCronJob() {
 	c := cron.New()
 	// 每天凌晨 3 点执行
 	c.AddFunc("0 3 * * *", sync.SyncCommentLikes)
+	c.AddFunc("* * * * *", competition_service.ScanCompetitionStatus)
 	c.Start()
 }
 

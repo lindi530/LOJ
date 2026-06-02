@@ -49,6 +49,7 @@ func SaveCompetitionJudgeResult(
 			ProblemID:     problemID,
 			SubmissionID:  problemSubmission.Id,
 			UserID:        userID,
+			IsAC:          accepted,
 			IsFirstAC:     isFirstAC,
 		}).Error; err != nil {
 			return err

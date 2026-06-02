@@ -88,19 +88,30 @@ func RunExample(code, language, input string, memoryLimit, timeLimit int, messag
 		runCmd = runtimeSetupCmd + " && " + runCmd
 	}
 	runContainerName := judgeContainerName(tempDir, "run")
-	dockerCmd := buildDockerCmd(image, tempDir, runCmd, runContainerName, memoryLimit, timeLimit)
+	dockerCmd := buildDockerCmd(image, tempDir, runCmd, runContainerName, memoryLimit, timeLimit, "/app/meta.txt")
 	global.Logger.Info("docker command: ", dockerCmd)
 	ws_service.WsHub.SendEditData(message, constants.JudgeStatusRunning)
 	stderr, err := runDockerCommand(dockerCmd, judgeRunTimeout(timeLimit, 1), runContainerName)
+	metric := readJudgeMetric(filepath.Join(tempDir, "meta.txt"))
 	if err != nil {
-		return problem_model.RunResult{Passed: false, Error: judgeStatusFromDockerError(err, stderr)}
+		return problem_model.RunResult{
+			Passed:      false,
+			Error:       judgeStatusFromDockerError(err, stderr),
+			ExecTime:    metric.ExecTime,
+			MemoryUsage: metric.MemoryUsage,
+		}
 	}
 
 	// 7. 读取输出文件
 	outBytes, err := readJudgeOutput(filepath.Join(tempDir, "output.txt"))
 	if err != nil {
 		if errors.Is(err, errJudgeOutputLimitExceeded) {
-			return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusOutputLimitExceeded}
+			return problem_model.RunResult{
+				Passed:      false,
+				Error:       constants.JudgeStatusOutputLimitExceeded,
+				ExecTime:    metric.ExecTime,
+				MemoryUsage: metric.MemoryUsage,
+			}
 		}
 		return problem_model.RunResult{Passed: false, Error: constants.JudgeStatusSystemError}
 	}
@@ -108,13 +119,15 @@ func RunExample(code, language, input string, memoryLimit, timeLimit int, messag
 	ws_service.WsHub.SendEditData(message, constants.JudgeStatusAccepted)
 
 	return problem_model.RunResult{
-		Passed: true,
-		Output: strings.TrimSpace(string(outBytes)),
+		Passed:      true,
+		Output:      strings.TrimSpace(string(outBytes)),
+		ExecTime:    metric.ExecTime,
+		MemoryUsage: metric.MemoryUsage,
 	}
 }
 
-func buildDockerCmd(image, tempDir, runCmd, containerName string, memoryLimit, timeLimit int) []string {
-	return buildDockerShellCmd(image, tempDir, limitedJudgeCommand(runCmd, timeLimit), containerName, memoryLimit)
+func buildDockerCmd(image, tempDir, runCmd, containerName string, memoryLimit, timeLimit int, metricPath string) []string {
+	return buildDockerShellCmd(image, tempDir, measuredJudgeCommand(runCmd, timeLimit, memoryLimit, metricPath), containerName, memoryLimit)
 }
 
 //  config 中写了配置

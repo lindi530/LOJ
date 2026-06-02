@@ -113,6 +113,7 @@ watch(() => props.competitionId, loadProblems, { immediate: true })
   gap: 0.6rem;
   align-items: center;
   margin: 0;
+  padding: 2.15rem;
   color: #74869b;
   font-size: 0.98rem;
 }
@@ -123,8 +124,8 @@ watch(() => props.competitionId, loadProblems, { immediate: true })
 
 .problem-table {
   overflow: hidden;
-  border: 1px solid #e9eef4;
-  border-radius: 0.65rem;
+  border: 0;
+  border-radius: 0;
 }
 
 .problem-table__head,
@@ -220,6 +221,10 @@ watch(() => props.competitionId, loadProblems, { immediate: true })
 }
 
 @media (max-width: 767.98px) {
+  .competition-problems__state {
+    padding: 1.15rem;
+  }
+
   .problem-table__head {
     display: none;
   }

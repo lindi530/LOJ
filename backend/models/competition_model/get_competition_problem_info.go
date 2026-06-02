@@ -8,11 +8,10 @@ type GetCompetitionProblemInfoReq struct {
 }
 
 type GetCompetitionProblemInfoResp struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	InputDesc   string `json:"input_desc"`
-	OutputDesc  string `json:"output_desc"`
-
+	Title       string                    `json:"title"`
+	Description string                    `json:"description"`
+	InputDesc   string                    `json:"input_desc"`
+	OutputDesc  string                    `json:"output_desc"`
 	Constraints problem_model.Constraints `json:"constraints" gorm:"-"`
 	Language    []string                  `json:"language" gorm:"-"`
 	Examples    []problem_model.Example   `json:"examples" gorm:"-"`

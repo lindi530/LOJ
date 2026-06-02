@@ -1,6 +1,8 @@
 package competition_service
 
 import (
+	"time"
+
 	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/competition_model"
@@ -9,6 +11,7 @@ import (
 
 type competitionSubmitJob struct {
 	UserID        int64  `json:"user_id"`
+	UserName      string `json:"user_name"`
 	CompetitionID int64  `json:"competition_id"`
 	ProblemNumber string `json:"problem_number"`
 	Language      string `json:"language"`
@@ -21,7 +24,14 @@ type competitionSubmitResult struct {
 	Data    competition_model.SubmitCompetitionProblemResp `json:"data"`
 }
 
-func SubmitCompetitionProblem(userID int64, req *competition_model.SubmitCompetitionProblemReq) (resp response.Response) {
+func SubmitCompetitionProblem(userID int64, userName string, req *competition_model.SubmitCompetitionProblemReq) (resp response.Response) {
+	hasOver, msg := HasOver(req.CompetitionID, time.Now())
+	if hasOver {
+		resp.Code = 1
+		resp.Message = msg
+		return
+	}
+
 	if global.MQChannel == nil {
 		resp.Code = 1
 		resp.Message = constants.CompetitionSubmitMessageJudgeQueueUnavailable
@@ -30,6 +40,7 @@ func SubmitCompetitionProblem(userID int64, req *competition_model.SubmitCompeti
 
 	result, err := publishCompetitionSubmitJob(competitionSubmitJob{
 		UserID:        userID,
+		UserName:      userName,
 		CompetitionID: req.CompetitionID,
 		ProblemNumber: req.ProblemNumber,
 		Language:      req.Language,

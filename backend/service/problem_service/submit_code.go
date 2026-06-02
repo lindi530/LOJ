@@ -42,6 +42,7 @@ func SubmitCode(userid int64, codeSubmission problem_model.CodeSubmission, messa
 
 	resp.Code = 0
 	runResult := RunCode(userid, codeSubmission.Code, codeSubmission.Language, &examples, constraints.MemoryLimit, constraints.TimeLimit, message)
+	execTime, memoryUsage := SummarizeRunResultMetrics(runResult)
 	msgContent := constants.JudgeStatusAccepted
 	totalCount := len(runResult)
 	acCount := totalCount
@@ -59,13 +60,15 @@ func SubmitCode(userid int64, codeSubmission problem_model.CodeSubmission, messa
 	}
 	problem_mysql.UpdateSubmitCount(codeSubmission.ProblemID)
 	problem_mysql.SaveSubmission(&problem_submission_model.ProblemSubmission{
-		UserId:    userid,
-		ProblemId: codeSubmission.ProblemID,
-		Code:      codeSubmission.Code,
-		Language:  codeSubmission.Language,
-		State:     msgContent,
-		Score:     math.Round(float64(acCount)/float64(totalCount)*10000) / 100,
-		CreatedAt: time.Now(),
+		UserId:      userid,
+		ProblemId:   codeSubmission.ProblemID,
+		Code:        codeSubmission.Code,
+		Language:    codeSubmission.Language,
+		State:       msgContent,
+		ExecTime:    execTime,
+		MemoryUsage: memoryUsage,
+		Score:       math.Round(float64(acCount)/float64(totalCount)*10000) / 100,
+		CreatedAt:   time.Now(),
 	})
 
 	if msgContent == constants.JudgeStatusAccepted {

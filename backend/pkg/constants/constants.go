@@ -36,6 +36,7 @@ const (
 )
 
 const (
+	CompetitionOver                               = "该竞赛已经结束！"
 	CompetitionSubmitMessageUnsafeCode            = "unsafe code"
 	CompetitionSubmitMessageJudgeQueueUnavailable = "judge queue unavailable"
 	CompetitionSubmitMessageJudgeTimeout          = "judge timeout"

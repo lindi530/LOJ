@@ -9,8 +9,8 @@ type UserSubmission struct {
 	Title       string    `json:"title"`
 	Language    string    `json:"language"`
 	State       string    `json:"state"`
-	ExecTime    int       `json:"exec_time"`
-	MemoryUsage int       `json:"memory_usage"`
+	ExecTime    int       `json:"exec_time"`    // ms
+	MemoryUsage int       `json:"memory_usage"` // KB
 	Score       float64   `json:"score"`
 	CreatedAt   time.Time `json:"created_at"`
 }

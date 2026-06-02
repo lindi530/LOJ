@@ -12,7 +12,7 @@ import (
 func GetCompetitionProblemForSubmit(competitionID int64, problemNumber string) (competition competition_model.Competition, competitionProblem competition_model.CompetitionProblem, examples []problem_model.Example, err error) {
 	err = global.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.
-			Select("id, start_time, end_time").
+			Select("id, name, start_time, end_time").
 			Where("id = ?", competitionID).
 			Take(&competition).Error; err != nil {
 			return err

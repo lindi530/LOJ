@@ -80,7 +80,7 @@ func RunCode(userid int64, code, language string, testcases *[]problem_model.Exa
 	}
 	for i := range *testcases {
 		runCommand := fmt.Sprintf("%s < /app/input%d.txt > /app/output%d.txt 2> /app/error%d.txt", runCmd, i, i, i)
-		runScript += limitedJudgeCommand(runCommand, timeLimit) + "\n"
+		runScript += measuredJudgeCommand(runCommand, timeLimit, memoryLimit, fmt.Sprintf("/app/meta%d.txt", i)) + "\n"
 	}
 	runScriptPath := filepath.Join(tempDir, "run.sh")
 	err = os.WriteFile(runScriptPath, []byte(runScript), 0755)
@@ -107,13 +107,20 @@ func RunCode(userid int64, code, language string, testcases *[]problem_model.Exa
 	dockerCmd := buildDockerShellCmd(image, tempDir, "sh /app/run.sh", runContainerName, memoryLimit)
 	stderr, err := runDockerCommand(dockerCmd, judgeRunTimeout(timeLimit, len(*testcases)), runContainerName)
 	if err != nil {
-		return []problem_model.RunResult{{Passed: false, Error: judgeStatusFromDockerError(err, stderr)}}
+		metric := readMaxJudgeMetric(tempDir, len(*testcases))
+		return []problem_model.RunResult{{
+			Passed:      false,
+			Error:       judgeStatusFromDockerError(err, stderr),
+			ExecTime:    metric.ExecTime,
+			MemoryUsage: metric.MemoryUsage,
+		}}
 	}
 
 	// 读取每个样例的输出并比较
 	results := make([]problem_model.RunResult, len(*testcases))
 	for i, tc := range *testcases {
 		outPath := filepath.Join(tempDir, fmt.Sprintf("output%d.txt", i))
+		metric := readJudgeMetric(filepath.Join(tempDir, fmt.Sprintf("meta%d.txt", i)))
 		outBytes, err := readJudgeOutput(outPath)
 		if err != nil {
 			errStatus := constants.JudgeStatusSystemError
@@ -121,8 +128,10 @@ func RunCode(userid int64, code, language string, testcases *[]problem_model.Exa
 				errStatus = constants.JudgeStatusOutputLimitExceeded
 			}
 			results[i] = problem_model.RunResult{
-				Passed: false,
-				Error:  errStatus,
+				Passed:      false,
+				Error:       errStatus,
+				ExecTime:    metric.ExecTime,
+				MemoryUsage: metric.MemoryUsage,
 			}
 			continue
 		}
@@ -134,10 +143,12 @@ func RunCode(userid int64, code, language string, testcases *[]problem_model.Exa
 			errStatus = constants.JudgeStatusWrongAnswer
 		}
 		results[i] = problem_model.RunResult{
-			Passed:   passed,
-			Output:   output,
-			Expected: expected,
-			Error:    errStatus,
+			Passed:      passed,
+			Output:      output,
+			Expected:    expected,
+			Error:       errStatus,
+			ExecTime:    metric.ExecTime,
+			MemoryUsage: metric.MemoryUsage,
 		}
 	}
 

@@ -8,15 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (CompetitionAPI) GetCompetitionProblemInfo(c *gin.Context) {
-	req := competition_model.GetCompetitionProblemInfoReq{}
+func (CompetitionAPI) GetCompetitionRankingList(c *gin.Context) {
+	req := competition_model.GetCompetitionRankingListReq{}
 
 	if err := c.ShouldBindUri(&req); err != nil {
 		response.FailWithCode(response.BadRequest, c)
 		return
 	}
 
-	resp := competition_service.GetCompetitionProblemInfo(&req)
+	resp := competition_service.GetCompetitionRankingList(&req)
 	if resp.Code == 1 {
 		response.FailWithMessage(resp.Message, c)
 		return

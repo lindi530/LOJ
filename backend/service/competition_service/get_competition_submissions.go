@@ -4,6 +4,9 @@ import (
 	"GO1/database/mysql/competition_mysql"
 	"GO1/middlewares/response"
 	"GO1/models/competition_model"
+	"GO1/pkg/constants"
+	"strings"
+	"time"
 )
 
 func GetCompetitionSubmissions(competitionID int64, req *competition_model.GetCompetitionSubmissionsReq) (resp response.Response) {
@@ -16,12 +19,20 @@ func GetCompetitionSubmissions(competitionID int64, req *competition_model.GetCo
 		pageSize = 20
 	}
 
-	respData, err := competition_mysql.GetCompetitionSubmissions(competitionID, (page-1)*pageSize, pageSize)
+	respData, err := competition_mysql.GetCompetitionSubmissions(competitionID, (page-1)*pageSize, pageSize, strings.TrimSpace(req.ProblemNumber))
 	if err != nil {
 		resp.Code = 1
-		resp.Message = "data query error"
+		resp.Message = constants.CompetitionSubmitMessageDataQueryError
 		return
 	}
+
+	problemNumbers, err := getCompetitionProblemNumbers(competitionID, time.Now())
+	if err != nil {
+		resp.Code = 1
+		resp.Message = constants.CompetitionSubmitMessageDataQueryError
+		return
+	}
+	respData.ProblemNumbers = problemNumbers
 
 	resp.Data = respData
 

@@ -4,6 +4,7 @@ import (
 	"GO1/database/mysql/competition_mysql"
 	"GO1/database/mysql/problem_mysql"
 	"GO1/database/redis/calendar_redis"
+	"GO1/database/redis/competition_redis"
 	"GO1/global"
 	"GO1/models/competition_model"
 	"GO1/models/problem_model"
@@ -49,20 +50,24 @@ func judgeCompetitionSubmission(job competitionSubmitJob) competitionSubmitResul
 	}
 
 	runResult := problem_service.RunCode(job.UserID, job.Code, job.Language, &examples, constraints.MemoryLimit, constraints.TimeLimit, message)
+	execTime, memoryUsage := problem_service.SummarizeRunResultMetrics(runResult)
 
 	state, score, accepted := summarizeCompetitionRunResult(runResult)
 	state = NormalizeJudgeStatus(state)
 
 	global.Logger.Error("state, score, accepted: ", state, score, accepted)
 
+	submitTime := time.Now()
 	problemSubmission := &problem_submission_model.ProblemSubmission{
-		UserId:    job.UserID,
-		ProblemId: uint(competitionProblem.ProblemID),
-		Code:      job.Code,
-		Language:  job.Language,
-		State:     state,
-		Score:     score,
-		CreatedAt: time.Now(),
+		UserId:      job.UserID,
+		ProblemId:   uint(competitionProblem.ProblemID),
+		Code:        job.Code,
+		Language:    job.Language,
+		State:       state,
+		ExecTime:    execTime,
+		MemoryUsage: memoryUsage,
+		Score:       score,
+		CreatedAt:   submitTime,
 	}
 	isFirstAC, err := competition_mysql.SaveCompetitionJudgeResult(
 		job.CompetitionID,
@@ -72,6 +77,23 @@ func judgeCompetitionSubmission(job competitionSubmitJob) competitionSubmitResul
 		accepted,
 	)
 	if err != nil {
+		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
+		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageSaveSubmissionFailed)
+	}
+
+	if err := competition_redis.UpdateCompetitionRankingList(
+		job.CompetitionID,
+		competition.StartTime,
+		competition.EndTime,
+		submitTime,
+		competitionProblem.ProblemID,
+		competitionProblem.ProblemNumber,
+		job.UserID,
+		job.UserName,
+		accepted,
+		isFirstAC,
+	); err != nil {
+		global.Logger.Error("update competition ranking list failed:", err)
 		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
 		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageSaveSubmissionFailed)
 	}

@@ -47,10 +47,13 @@ func (CompetitionAPI) SubmitCompetitionProblem(c *gin.Context) {
 		return
 	}
 
-	userID := jwt.GetUserIdFromToken(c.GetHeader("Authorization"))
-	resp := competition_service.SubmitCompetitionProblem(userID, &req)
+	claims, err := jwt.GetUserClaims(c.GetHeader("Authorization"))
+	if err != nil {
+		response.FailWithCode(response.InvalidAccessToken, c)
+		return
+	}
 
-	global.Logger.Error("submit respdata: ", resp)
+	resp := competition_service.SubmitCompetitionProblem(claims.UserId, claims.UserName, &req)
 
 	if resp.Code == 1 {
 		response.FailWithMessage(resp.Message, c)
