@@ -50,35 +50,22 @@
           </li>
 
           <template v-if="isLogin">
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle user-menu"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
+            <li class="nav-item">
+              <n-dropdown
+                trigger="click"
+                placement="bottom-end"
+                :options="userMenuOptions"
+                :menu-props="userDropdownMenuProps"
+                :render-icon="renderUserMenuIcon"
+                :render-label="renderUserMenuLabel"
+                @select="handleUserMenuSelect"
               >
+              <button type="button" class="nav-link user-menu" aria-haspopup="menu">
                 <img :src="userAvatar" alt="Avatar" class="rounded-circle user-avatar">
                 <span class="user-name">{{ userName }}</span>
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end shadow animated-dropdown">
-                <li>
-                  <RouterLink class="dropdown-item" :to="`/users/${userId}`">
-                    <i class="bi bi-person me-2"></i> 用户信息
-                  </RouterLink>
-                </li>
-                <li>
-                  <RouterLink class="dropdown-item" to="/user/profile">
-                    <i class="bi bi-gear me-2"></i> 设置
-                  </RouterLink>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <a class="dropdown-item text-danger" href="#" @click.prevent="logout">
-                    <i class="bi bi-box-arrow-right me-2"></i> 登出
-                  </a>
-                </li>
-              </ul>
+                <i class="bi bi-chevron-down user-menu-chevron"></i>
+              </button>
+              </n-dropdown>
             </li>
           </template>
 
@@ -100,7 +87,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { closeWebSocket } from '@/composables/useWebSocket'
@@ -125,6 +112,13 @@ const isLogin = computed(() => store.getters['user/isLogin'])
 const userName = computed(() => store.getters['user/userName'])
 const userId = computed(() => store.getters['user/userId'])
 const userAvatar = computed(() => store.getters['user/userAvatar'] || '/default-avatar.svg')
+const userMenuOptions = computed(() => [
+  { label: '用户信息', key: 'profile', icon: 'bi bi-person' },
+  { label: '设置', key: 'settings', icon: 'bi bi-gear' },
+  { type: 'divider', key: 'divider' },
+  { label: '登出', key: 'logout', icon: 'bi bi-box-arrow-right', danger: true }
+])
+const userDropdownMenuProps = { class: 'loj-user-dropdown-menu' }
 
 const leftLinks = computed(() => [
   { label: '帖子', to: '/' },
@@ -152,6 +146,43 @@ function handleLinkClick(item) {
 function openChat() {
   isOpen.value = false
   chatVisible.value = true
+}
+
+function handleUserMenuSelect(key) {
+  switch (key) {
+    case 'profile':
+      router.push(`/users/${userId.value}`)
+      break
+    case 'settings':
+      router.push('/user/profile')
+      break
+    case 'logout':
+      logout()
+      break
+    default:
+      break
+  }
+}
+
+function renderUserMenuIcon(option) {
+  if (!option.icon) return null
+
+  return h('i', {
+    class: [
+      'loj-user-dropdown-icon',
+      option.icon,
+      option.danger ? 'is-danger' : ''
+    ]
+  })
+}
+
+function renderUserMenuLabel(option) {
+  return h('span', {
+    class: [
+      'loj-user-dropdown-label',
+      option.danger ? 'is-danger' : ''
+    ]
+  }, option.label)
 }
 
 async function logout() {
@@ -318,6 +349,87 @@ function handleLoginSuccess() {
   white-space: nowrap;
 }
 
+.user-menu-chevron {
+  font-size: 0.72rem;
+  opacity: 0.72;
+}
+
+.loj-user-dropdown {
+  position: relative;
+}
+
+.loj-user-dropdown-menu {
+  top: calc(100% + 0.45rem);
+  right: 0;
+  left: auto;
+  z-index: 1060;
+}
+
+:global(.loj-user-dropdown-menu) {
+  min-width: 10rem;
+  padding: 0.45rem;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0.85rem;
+  background-color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  color: #334155;
+  animation: fadeInDown 0.2s ease-out;
+  transform-origin: top right;
+}
+
+:global(.loj-user-dropdown-menu .n-dropdown-option) {
+  margin: 0.05rem 0;
+}
+
+:global(.loj-user-dropdown-menu .n-dropdown-option-body) {
+  min-height: auto;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.6rem;
+  color: #334155;
+  font-weight: 500;
+}
+
+:global(.loj-user-dropdown-menu .n-dropdown-option-body:hover),
+:global(.loj-user-dropdown-menu .n-dropdown-option-body--pending) {
+  background-color: #eef6ff;
+  color: #0f766e;
+}
+
+:global(.loj-user-dropdown-menu .n-dropdown-divider) {
+  margin: 0.35rem 0;
+  background-color: rgba(15, 23, 42, 0.1);
+}
+
+:global(.loj-user-dropdown-icon) {
+  margin-right: 0.5rem;
+  font-size: 1rem;
+}
+
+:global(.loj-user-dropdown-label),
+:global(.loj-user-dropdown-icon) {
+  color: inherit;
+}
+
+:global(.loj-user-dropdown-label.is-danger),
+:global(.loj-user-dropdown-icon.is-danger) {
+  color: #dc3545;
+}
+
+:global(.loj-user-dropdown-menu .n-dropdown-option-body:hover .is-danger),
+:global(.loj-user-dropdown-menu .n-dropdown-option-body--pending .is-danger) {
+  color: #b02a37;
+}
+
+:global(html[data-loj-editor-theme="dark"] .loj-user-dropdown-menu) {
+  color: #dbe7f5;
+  background-color: #111827;
+  border-color: #2c3a50;
+}
+
+:global(html[data-loj-editor-theme="dark"] .loj-user-dropdown-menu .n-dropdown-option-body) {
+  color: #dbe7f5;
+}
+
 .animated-dropdown {
   animation: fadeInDown 0.2s ease-out;
 }
@@ -419,6 +531,12 @@ function handleLoginSuccess() {
     width: 100%;
     height: 2.45rem;
     border-radius: 0.65rem;
+  }
+
+  .loj-user-dropdown-menu {
+    position: static;
+    width: 100%;
+    margin-top: 0.35rem;
   }
 }
 

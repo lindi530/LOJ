@@ -6,7 +6,7 @@ import (
 	"GO1/models/competition_model"
 )
 
-const defaultCompetitionRating = 1500
+const defaultCompetitionRating = 1000
 
 func CalculateRank(rankingList []competition_model.CompetitionRankingListItem, ratingBefore map[int64]int) map[int64]int {
 	ratingAfter := make(map[int64]int, len(rankingList))

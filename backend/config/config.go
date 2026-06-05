@@ -17,4 +17,5 @@ type Config struct {
 	Upload      upload.Upload     `mapstructure:"upload"`
 	Settings    settings.Settings `mapstructure:"settings"`
 	Language    language.Language `mapstructure:"language"`
+	SqlFile     SqlFile           `mapstructure:"sql_file"`
 }

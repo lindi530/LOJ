@@ -1,10 +1,7 @@
 <template>
-  <section class="submission-calendar-card">
-    <header class="calendar-header">
-      <div class="calendar-tabs">
-        <button class="calendar-tab is-active" type="button">基本信息</button>
-      </div>
-
+  <section class="submission-calendar">
+    <header class="calendar-toolbar">
+      <h2>提交日历</h2>
       <n-select
         v-model:value="selectedRange"
         class="year-select"
@@ -344,57 +341,33 @@ function formatRFC3339AtMidnight(date) {
 </script>
 
 <style scoped>
-.submission-calendar-card {
+.submission-calendar {
   --day-size: 11px;
   --day-gap: 4px;
   display: flex;
   height: 100%;
   min-width: 0;
-  overflow: hidden;
-  border: 1px solid #eef0f3;
-  border-radius: 8px;
   background: #ffffff;
-  box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
   flex-direction: column;
 }
 
-.calendar-header {
+.calendar-toolbar {
   display: flex;
-  padding: 10px 22px 0;
-  border-bottom: 1px solid #eef0f3;
+  padding: 20px 22px 0;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
-.calendar-tabs {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-}
-
-.calendar-tab {
-  position: relative;
-  padding: 11px 2px 10px;
-  border: 0;
-  background: transparent;
+.calendar-toolbar h2 {
+  margin: 0;
+  overflow: hidden;
   color: #1f2328;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.4;
-  cursor: default;
-}
-
-.calendar-tab::after {
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 2px;
-  border-radius: 999px 999px 0 0;
-  background: #18a058;
-  content: "";
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .year-select {
@@ -539,14 +512,14 @@ function formatRFC3339AtMidnight(date) {
 }
 
 @media (max-width: 900px) {
-  .submission-calendar-card {
+  .submission-calendar {
     height: auto;
   }
 }
 
 @media (max-width: 576px) {
-  .calendar-header {
-    padding: 8px 16px 0;
+  .calendar-toolbar {
+    padding: 18px 16px 0;
     gap: 12px;
   }
 
@@ -555,7 +528,7 @@ function formatRFC3339AtMidnight(date) {
   }
 
   .summary-grid {
-    margin: 0 16px;
+    margin: 16px 16px 0;
   }
 
   .calendar-scroll {

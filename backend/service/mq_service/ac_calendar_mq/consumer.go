@@ -40,7 +40,9 @@ func ConsumeACCalendar() error {
 		if err := calendar_mysql.SaveACCount(&data); err != nil {
 			global.Logger.Error("save ac count failed:", err)
 
-			// 业务处理失败，重新放回队列，之后重试
+			// 		// 消费失败，拒绝消息
+			//		// requeue=true 表示重新入队
+			//		// requeue=false 表示丢弃，或者进入死信队列
 			_ = msg.Nack(false, true)
 			continue
 		}

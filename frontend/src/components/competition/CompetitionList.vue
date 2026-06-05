@@ -79,13 +79,19 @@
         />
       </div>
 
-      <div v-if="endedTotal > endedPageSize" class="competition-list__pagination">
+      <div v-if="endedPageCount > 1" class="competition-list__pagination">
         <n-pagination
           :page="endedPage"
           :page-size="endedPageSize"
-          :item-count="endedTotal"
+          :page-count="endedPageCount"
+          :disabled="endedLoading"
+          show-quick-jumper
           @update:page="$emit('update-ended-page', $event)"
-        />
+        >
+          <template #goto>
+            跳转
+          </template>
+        </n-pagination>
       </div>
     </section>
   </div>
@@ -128,9 +134,9 @@ defineProps({
     type: Number,
     default: 8
   },
-  endedTotal: {
+  endedPageCount: {
     type: Number,
-    default: 0
+    default: 1
   }
 })
 

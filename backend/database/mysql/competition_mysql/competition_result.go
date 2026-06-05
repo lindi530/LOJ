@@ -124,6 +124,11 @@ func SaveCompetitionResults(results []competition_model.CompetitionResult) error
 	}
 
 	return global.DB.Transaction(func(tx *gorm.DB) error {
+		// Update before result upsert so retries of the same competition do not recount it.
+		if err := UpdateCompetitionSummary(tx, results); err != nil {
+			return err
+		}
+
 		if err := tx.Clauses(clause.OnConflict{
 			Columns: []clause.Column{
 				{Name: "competition_id"},

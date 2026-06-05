@@ -128,18 +128,28 @@ export default {
   getUserSubmissionCalendar(userId, data) {
     return request.post(`/calendar/submissions/${userId}`, data)
   },
+  getCompetitionHistory(userId) {
+    return request.get(`/competition/history/${userId}`)
+  },
   getProblemSubmissionList(problemID) {
     return request.get(`/problems/${problemID}/submissions`)
   },
   getSubmissionDetail(submissionID) {
     return request.get(`/problems/submissions/${submissionID}`)
   },
-  getCompetitionsByEndStatus(hasEnded, page) {
+  getCompetitionsByEndStatus(hasEnded, page, pageSize) {
+    const params = { has_ended: hasEnded }
+
+    if (page !== undefined) {
+      params.page = page
+    }
+
+    if (pageSize !== undefined) {
+      params.page_size = pageSize
+    }
+
     return request.get('/competition/status', {
-      params: {
-        has_ended: hasEnded,
-        page
-      }
+      params
     })
   },
   getCompetition(competitionId) {
@@ -147,6 +157,9 @@ export default {
   },
   getCompetitionRankList(competitionId) {
     return request.get(`/competition/${competitionId}/ranking_list`)
+  },
+  getCompetitionRanking() {
+    return request.get(`/competition/ranking`)
   },
   createCompetition(data) {
     return request.post('/competition/create', data)

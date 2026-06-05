@@ -202,15 +202,22 @@
         <span>{{ problemFilter ? '可以切换题号查看其他提交。' : '还没有任何判题结果。' }}</span>
       </div>
 
-      <footer class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 border-top bg-white px-4 py-3">
-        <p class="mb-0 small text-secondary">显示 {{ shownStart }}-{{ shownEnd }} / {{ total }}</p>
+      <footer v-if="records.length > 0 || total > 0" class="submission-footer">
+        <div class="submission-footer__summary" aria-live="polite">
+         
+        </div>
 
-        <nav v-if="totalPages > 1" aria-label="提交记录分页">
-          <ul class="pagination pagination-sm mb-0">
+        <nav v-if="totalPages > 1" class="submission-footer__pager" aria-label="提交记录分页">
+          <ul class="pagination pagination-sm submission-pagination mb-0">
             <li class="page-item" :class="{ disabled: currentPage === 1 || loading }">
-              <button class="page-link d-inline-flex align-items-center gap-1" type="button" :disabled="currentPage === 1 || loading" @click="goToPage(currentPage - 1)">
+              <button
+                class="page-link submission-page-link submission-page-link--control"
+                type="button"
+                :disabled="currentPage === 1 || loading"
+                @click="goToPage(currentPage - 1)"
+              >
                 <i class="bi bi-chevron-left" aria-hidden="true"></i>
-                上一页
+                <span>上一页</span>
               </button>
             </li>
             <li
@@ -220,7 +227,7 @@
               :class="{ active: page === currentPage, disabled: loading }"
             >
               <button
-                class="page-link"
+                class="page-link submission-page-link submission-page-link--number"
                 type="button"
                 :disabled="loading"
                 :aria-current="page === currentPage ? 'page' : undefined"
@@ -230,8 +237,13 @@
               </button>
             </li>
             <li class="page-item" :class="{ disabled: currentPage === totalPages || loading }">
-              <button class="page-link d-inline-flex align-items-center gap-1" type="button" :disabled="currentPage === totalPages || loading" @click="goToPage(currentPage + 1)">
-                下一页
+              <button
+                class="page-link submission-page-link submission-page-link--control"
+                type="button"
+                :disabled="currentPage === totalPages || loading"
+                @click="goToPage(currentPage + 1)"
+              >
+                <span>下一页</span>
                 <i class="bi bi-chevron-right" aria-hidden="true"></i>
               </button>
             </li>
@@ -751,10 +763,188 @@ watch(currentPage, loadRecords)
   white-space: nowrap;
 }
 
-.pagination {
-  --bs-pagination-color: #13866c;
-  --bs-pagination-active-bg: #22ae90;
-  --bs-pagination-active-border-color: #22ae90;
-  --bs-pagination-hover-color: #0f6e58;
+.submission-footer {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(180deg, #fbfdfc 0%, #f7fbfa 100%);
+  border-top: 1px solid #e5edf3;
+}
+
+.submission-footer__summary {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.submission-footer__summary-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  color: #13866c;
+  background: #e8f8f3;
+  border: 1px solid #ccefe4;
+  border-radius: 0.5rem;
+}
+
+.submission-footer__summary-copy {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.submission-footer__summary-copy strong {
+  overflow: hidden;
+  color: #25364b;
+  font-size: 0.94rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submission-footer__summary-copy span {
+  overflow: hidden;
+  color: #687a8f;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submission-footer__filter {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 1.8rem;
+  padding: 0 0.68rem;
+  color: #087b61;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid #ccefe4;
+  border-radius: 999px;
+}
+
+.submission-footer__pager {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.submission-pagination {
+  --bs-pagination-border-width: 0;
+  --bs-pagination-focus-box-shadow: 0 0 0 3px rgba(34, 174, 144, 0.16);
+  gap: 0.32rem;
+  padding: 0.2rem;
+  background: #fff;
+  border: 1px solid #dce7ef;
+  border-radius: 0.62rem;
+  box-shadow: 0 0.35rem 1rem rgba(38, 53, 74, 0.06);
+}
+
+.submission-pagination .page-item:first-child .page-link,
+.submission-pagination .page-item:last-child .page-link {
+  border-radius: 0.45rem;
+}
+
+.submission-page-link {
+  display: inline-flex;
+  gap: 0.34rem;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.15rem;
+  min-height: 2.15rem;
+  padding: 0 0.72rem;
+  color: #4f637b;
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1;
+  border-radius: 0.45rem;
+  transition: color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.submission-page-link:hover:not(:disabled) {
+  color: #087b61;
+  background: #eefaf6;
+}
+
+.submission-page-link:disabled {
+  color: #a5b3c2;
+  background: transparent;
+}
+
+.submission-page-link--number {
+  padding-right: 0.45rem;
+  padding-left: 0.45rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.submission-page-link--control {
+  min-width: 5.15rem;
+}
+
+.submission-pagination .active .submission-page-link {
+  color: #fff;
+  background: #22ae90;
+  box-shadow: 0 0.38rem 0.8rem rgba(34, 174, 144, 0.25);
+}
+
+@media (max-width: 767.98px) {
+  .submission-footer {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 0.95rem 1rem 1rem;
+  }
+
+  .submission-footer__summary {
+    align-items: flex-start;
+  }
+
+  .submission-footer__pager {
+    justify-content: flex-start;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+  }
+
+  .submission-pagination {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .submission-footer__summary {
+    flex-wrap: wrap;
+  }
+
+  .submission-footer__summary-copy {
+    flex: 1 1 calc(100% - 3rem);
+  }
+
+  .submission-footer__filter {
+    margin-left: 2.9rem;
+  }
+
+  .submission-page-link--control {
+    min-width: 2.15rem;
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+  }
+
+  .submission-page-link--control span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
 }
 </style>

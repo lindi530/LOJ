@@ -14,7 +14,7 @@
             :ended-error="endedError"
             :ended-page="endedPage"
             :ended-page-size="ENDED_PAGE_SIZE"
-            :ended-total="endedTotal"
+            :ended-page-count="endedPageCount"
             @select="goToCompetition"
             @retry-ongoing="loadOngoingCompetitions"
             @retry-ended="loadEndedCompetitions"
@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import api from '@/api'
@@ -58,6 +58,20 @@ const endedError = ref('')
 const rankingsError = ref('')
 const endedPage = ref(1)
 const endedTotal = ref(0)
+const endedHasExactTotal = ref(false)
+const endedPageCount = computed(() => {
+  const hasPossibleNextPage = endedCompetitions.value.length >= ENDED_PAGE_SIZE
+
+  if (hasPossibleNextPage) {
+    return Math.max(endedPage.value + 1, Math.ceil(endedTotal.value / ENDED_PAGE_SIZE))
+  }
+
+  if (endedHasExactTotal.value) {
+    return Math.max(1, Math.ceil(endedTotal.value / ENDED_PAGE_SIZE))
+  }
+
+  return Math.max(1, endedPage.value)
+})
 
 async function loadOngoingCompetitions() {
   ongoingLoading.value = true
@@ -83,11 +97,13 @@ async function loadEndedCompetitions() {
   endedError.value = ''
 
   try {
-    const resp = await api.getCompetitionsByEndStatus(true, endedPage.value)
+    const resp = await api.getCompetitionsByEndStatus(true, endedPage.value, ENDED_PAGE_SIZE)
     const list = getCompetitionList(resp.data)
     if (resp.code === 0 && list) {
       endedCompetitions.value = list
-      endedTotal.value = Number(resp.data?.total) || 0
+      const total = getCompetitionTotal(resp.data)
+      endedHasExactTotal.value = total !== null
+      endedTotal.value = total ?? list.length
     } else {
       endedError.value = resp.message || '已结束竞赛加载失败'
     }
@@ -114,7 +130,21 @@ function getCompetitionList(data) {
   return null
 }
 
+function getCompetitionTotal(data) {
+  const total = Number(data?.total ?? data?.count ?? data?.total_count ?? data?.pagination?.total)
+
+  if (Number.isFinite(total) && total >= 0) {
+    return total
+  }
+
+  return null
+}
+
 function updateEndedPage(page) {
+  if (endedLoading.value || page === endedPage.value) {
+    return
+  }
+
   endedPage.value = page
   loadEndedCompetitions()
 }
@@ -124,9 +154,10 @@ async function loadRankings() {
   rankingsError.value = ''
 
   try {
-    const resp = await api.getCompetitionRankList()
+    const resp = await api.getCompetitionRanking()
     if (resp.code === 0 && Array.isArray(resp.data)) {
       rankings.value = resp.data
+      console.log('Rankings loaded:', resp.data)
     } else {
       rankingsError.value = resp.message || 'Rank 分榜加载失败'
     }
@@ -152,7 +183,7 @@ function goToCompetition(competition) {
 onMounted(() => {
   loadOngoingCompetitions()
   loadEndedCompetitions()
-  //loadRankings()
+  loadRankings()
 })
 </script>
 

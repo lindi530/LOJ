@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -35,37 +37,34 @@ func InitGorm() {
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour * 4)
 
-	files := []string{
-		"database/sql/calendar_submissions.sql",
-		"database/sql/competitions.sql",
-		"database/sql/competition_players.sql",
-		"database/sql/competition_problems.sql",
-		"database/sql/competition_submissions.sql",
-		"database/sql/competition_results.sql",
+	sqlDir := global.Config.SqlFile.Path
+
+	files, err := filepath.Glob(filepath.Join(sqlDir, "*.sql"))
+	if err != nil {
+		global.Logger.Error("SQL文件匹配失败: " + err.Error())
+		return
 	}
+	// 保证每次执行顺序一致
+	sort.Strings(files)
 
 	for _, file := range files {
 		sqlBytes, err := os.ReadFile(file)
 		if err != nil {
-			global.Logger.Error("SQL文件读取失败: " + file)
+			global.Logger.Error("SQL文件读取失败: " + file + ", 错误: " + err.Error())
 			return
 		}
-		sql := string(sqlBytes)
-		// 去除首尾空白，如果末尾有分号，MySQL 可以接受（也可以去掉）
-		sql = strings.TrimSpace(sql)
+
+		sql := strings.TrimSpace(string(sqlBytes))
 		if sql == "" {
 			continue
 		}
+
 		if err := db.Exec(sql).Error; err != nil {
 			global.Logger.Error("执行SQL失败: " + file + ", 错误: " + err.Error())
 			return
 		}
-		global.Logger.Info("成功执行SQL文件: " + file)
-	}
 
-	if err != nil {
-		global.Logger.Error("数据库创建失败！")
-		return
+		global.Logger.Info("成功执行SQL文件: " + file)
 	}
 
 	global.DB = db

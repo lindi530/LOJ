@@ -13,20 +13,20 @@ func UsersRouter(router *gin.RouterGroup) {
 	users.POST("/register", api.ApiGroups.UserAPI.UserAccountAPI.Register)
 	users.POST("/login", api.ApiGroups.UserAPI.UserAccountAPI.Login)
 	users.POST("/online", api.ApiGroups.UserAPI.RefreshOnlineState)
+	users.GET("/:user_id/posts", api.ApiGroups.UserAPI.GetUserPosts)
+	users.GET("/:user_id", api.ApiGroups.UserAPI.UserInfo)
+	users.GET("/:user_id/submissions", api.ApiGroups.UserAPI.GetUserSubmissionList)
 
 	users.Use(jwt.JWTAuthMiddleware())
 	{
 		users.POST("/logout", api.ApiGroups.UserAPI.UserAccountAPI.Logout)
 		users.DELETE("/:user_id/posts/:post_id", api.ApiGroups.UserAPI.DeleteUserPost)
 		users.DELETE("/:user_id", api.ApiGroups.UserAPI.UserAccountAPI.DeleteUser)
-		users.GET("/:user_id", api.ApiGroups.UserAPI.UserInfo)
+
 		users.GET("/userlist", api.ApiGroups.UserAPI.GetUserList)
-		users.GET("/:user_id/posts", api.ApiGroups.UserAPI.GetUserPosts)
 		users.POST("/posts/create", api.ApiGroups.UserAPI.CreateUserPost)
 		users.POST("/:user_id/modify_avatar", api.ApiGroups.UserAPI.ModifyAvatar)
 		users.PATCH("/:user_id/profile", api.ApiGroups.UserAPI.ModifyProfile)
-
-		users.GET("/:user_id/submissions", api.ApiGroups.UserAPI.GetUserSubmissionList)
 
 		users.GET("/:user_id/is_following", api.ApiGroups.UserAPI.UserFollowAPI.CheckFollows)
 		users.POST("/:user_id/follow", api.ApiGroups.UserAPI.UserFollowAPI.FollowUser)

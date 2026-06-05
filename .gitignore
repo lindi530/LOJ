@@ -54,3 +54,5 @@ backend_uploads/
 *.tmp
 *.bak
 *.xml
+
+# design-md/

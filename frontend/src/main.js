@@ -6,6 +6,7 @@ import store from './store'
 import router from './router'
 import './utils/request'
 import naive from 'naive-ui'
+import './assets/tailwind.css'
 import { restoreAuth } from './utils/auth'
 
 

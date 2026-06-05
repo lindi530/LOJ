@@ -189,6 +189,8 @@ const getLanguageClass = (language) => {
 </script>
 
 <style scoped>
+@reference "tailwindcss";
+
 /* 保持原有样式，可根据需求微调列宽 */
 .status-badge {
   @apply px-2 py-1 rounded-full text-xs font-medium;

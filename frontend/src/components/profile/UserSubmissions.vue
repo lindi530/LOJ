@@ -53,7 +53,7 @@ const props = defineProps({
 
 const dialog = useDialog()
 const currentPage = ref(1);
-const pageSize = ref(2);  // 每页条数
+const pageSize = ref(10);  // 每页条数
 const total = ref(0);      // 总数，后端返回
 const submissions = ref([]);
 

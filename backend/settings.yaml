@@ -69,3 +69,5 @@ language:
         need_compile: true
 rabbitmq:
     url: "amqp://guest:guest@localhost:5672/"
+sql_file:
+    path: "database/sql"

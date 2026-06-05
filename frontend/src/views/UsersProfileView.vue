@@ -3,10 +3,18 @@
     <div class="profile-shell">
       <UserProfileInfo class="profile-info-panel" :user="user"/>
 
-      <UserSubmissionCalendar
-        class="calendar-panel"
-        :user-id="userId"
-      />
+      <section class="profile-overview-card calendar-panel">
+        <header class="overview-header">
+          <div class="overview-tabs">
+            <button class="overview-tab is-active" type="button">基本信息</button>
+          </div>
+        </header>
+
+        <div class="overview-content">
+          <UserSubmissionCalendar :user-id="userId" />
+          <UserRankScoreChart :user-id="userId" />
+        </div>
+      </section>
 
       <main class="profile-main">
         <n-card class="activity-card" :bordered="false">
@@ -45,6 +53,7 @@ import { useRoute } from 'vue-router';
 import { useDialog }  from 'naive-ui'
 import UserProfileInfo from '../components/profile/UserProfileInfo.vue';
 import UserSubmissionCalendar from '../components/profile/UserSubmissionCalendar.vue';
+import UserRankScoreChart from '../components/profile/UserRankScoreChart.vue';
 import UserPosts from '../components/profile/UserPosts.vue';
 import UserSubmissions from '../components/profile/UserSubmissions.vue';
 import NewPostForm from '../components/profile/NewPostForm.vue';
@@ -139,6 +148,59 @@ const loadUserProfile = async () => {
   min-width: 0;
 }
 
+.profile-overview-card {
+  overflow: hidden;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
+}
+
+.overview-header {
+  display: flex;
+  padding: 10px 22px 0;
+  border-bottom: 1px solid #eef0f3;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.overview-tabs {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.overview-tab {
+  position: relative;
+  padding: 11px 2px 10px;
+  border: 0;
+  background: transparent;
+  color: #1f2328;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: default;
+}
+
+.overview-tab::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 999px 999px 0 0;
+  background: #18a058;
+  content: "";
+}
+
+.overview-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
 .profile-main {
   grid-area: main;
   display: flex;
@@ -195,6 +257,10 @@ const loadUserProfile = async () => {
   .profile-shell {
     width: min(100% - 20px, 1180px);
     gap: 14px;
+  }
+
+  .overview-header {
+    padding: 8px 16px 0;
   }
 
   :deep(.profile-tabs .n-tabs-nav) {

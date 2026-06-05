@@ -12,7 +12,8 @@ func CompetitionRouters(router *gin.RouterGroup) {
 
 	auth.GET("/status", api.ApiGroups.CompetitionAPI.GetCompetitions)
 	auth.GET("/:competition_id", api.ApiGroups.CompetitionAPI.GetCompetition)
-	auth.GET("/rank")
+	auth.GET("/ranking", api.ApiGroups.CompetitionAPI.GetRanking)
+	auth.GET("/history/:user_id", api.ApiGroups.CompetitionAPI.GetCompetitionHistory)
 
 	auth.Use(jwt.JWTAuthMiddleware())
 	{

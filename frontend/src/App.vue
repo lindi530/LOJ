@@ -86,4 +86,18 @@ nav a {
 nav a.router-link-exact-active {
   color: #42b983;
 }
+
+#app {
+  isolation: isolate;
+}
+
+#building {
+  z-index: 0;
+  pointer-events: none;
+}
+
+#app > :not(#building) {
+  position: relative;
+  z-index: 1;
+}
 </style>

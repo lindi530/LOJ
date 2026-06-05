@@ -20,8 +20,8 @@ func GetCompetitions(hasEnded bool, page, pageSize int) (data []*competition_mod
 	}
 
 	err = query.
-		Order("start_time ASC").
-		Order("end_time ASC").
+		Order("start_time DESC").
+		Order("end_time DESC").
 		Order("id ASC").
 		Find(&data).Error
 
