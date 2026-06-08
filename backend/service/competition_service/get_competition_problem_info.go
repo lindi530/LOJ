@@ -12,8 +12,8 @@ import (
 
 func GetCompetitionProblemInfo(req *competition_model.GetCompetitionProblemInfoReq) (resp response.Response) {
 	now := time.Now()
-	hasOver, msg := HasOver(req.CompetitionID, now)
-	if hasOver {
+	hasNotStarted, msg := HasNotStarted(req.CompetitionID, now)
+	if hasNotStarted {
 		resp.Code = 1
 		resp.Message = msg
 		return

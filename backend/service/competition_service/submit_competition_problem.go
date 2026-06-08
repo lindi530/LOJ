@@ -10,12 +10,13 @@ import (
 )
 
 type competitionSubmitJob struct {
-	UserID        int64  `json:"user_id"`
-	UserName      string `json:"user_name"`
-	CompetitionID int64  `json:"competition_id"`
-	ProblemNumber string `json:"problem_number"`
-	Language      string `json:"language"`
-	Code          string `json:"code"`
+	UserID        int64     `json:"user_id"`
+	UserName      string    `json:"user_name"`
+	CompetitionID int64     `json:"competition_id"`
+	ProblemNumber string    `json:"problem_number"`
+	Language      string    `json:"language"`
+	Code          string    `json:"code"`
+	SubmitTime    time.Time `json:"submit_time"`
 }
 
 type competitionSubmitResult struct {
@@ -25,8 +26,9 @@ type competitionSubmitResult struct {
 }
 
 func SubmitCompetitionProblem(userID int64, userName string, req *competition_model.SubmitCompetitionProblemReq) (resp response.Response) {
-	hasOver, msg := HasOver(req.CompetitionID, time.Now())
-	if hasOver {
+	now := time.Now()
+	hasNotStarted, msg := HasNotStarted(req.CompetitionID, now)
+	if hasNotStarted {
 		resp.Code = 1
 		resp.Message = msg
 		return
@@ -45,6 +47,7 @@ func SubmitCompetitionProblem(userID int64, userName string, req *competition_mo
 		ProblemNumber: req.ProblemNumber,
 		Language:      req.Language,
 		Code:          req.Code,
+		SubmitTime:    now,
 	})
 	if err != nil {
 		resp.Code = 1

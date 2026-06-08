@@ -2,6 +2,7 @@ package competition_service
 
 import (
 	"GO1/database/mysql/competition_mysql"
+	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/competition_model"
 	"GO1/pkg/constants"
@@ -31,6 +32,8 @@ func CreateCompetition(c *gin.Context, req *competition_model.CreateCompetitionR
 		return
 	}
 
+	global.Logger.Warn("req.Password: ", req.Password)
+	global.Logger.Warn("passwordHash: ", passwordHash)
 	competition := &competition_model.Competition{
 		Name:         req.Name,
 		Status:       1,

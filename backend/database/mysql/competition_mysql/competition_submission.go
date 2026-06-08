@@ -1,6 +1,8 @@
 package competition_mysql
 
 import (
+	"time"
+
 	"GO1/global"
 	"GO1/models/competition_model"
 	"GO1/models/problem_model"
@@ -18,6 +20,8 @@ func SaveCompetitionJudgeResult(
 	userID int64,
 	problemSubmission *problem_submission_model.ProblemSubmission,
 	accepted bool,
+	competitionEndTime time.Time,
+	updateCompetitionProblemStats bool,
 ) (isFirstAC bool, err error) {
 	err = global.DB.Transaction(func(tx *gorm.DB) error {
 		var competitionProblem competition_model.CompetitionProblem
@@ -38,6 +42,19 @@ func SaveCompetitionJudgeResult(
 				return err
 			}
 			isFirstAC = acceptedCount == 0
+		}
+
+		isFirstCompetitionProblemAC := isFirstAC
+		if accepted && updateCompetitionProblemStats && !competitionEndTime.IsZero() {
+			var acceptedCount int64
+			if err := tx.
+				Table("competition_submissions AS cs").
+				Joins("JOIN problem_submissions AS ps ON ps.id = cs.submission_id").
+				Where("cs.competition_id = ? AND cs.problem_id = ? AND cs.user_id = ? AND ps.state = ? AND ps.created_at < ?", competitionID, problemID, userID, constants.JudgeStatusAccepted, competitionEndTime).
+				Count(&acceptedCount).Error; err != nil {
+				return err
+			}
+			isFirstCompetitionProblemAC = acceptedCount == 0
 		}
 
 		if err := tx.Create(problemSubmission).Error; err != nil {
@@ -62,11 +79,13 @@ func SaveCompetitionJudgeResult(
 			return err
 		}
 
-		if err := tx.
-			Model(&competition_model.CompetitionProblem{}).
-			Where("competition_id = ? AND problem_id = ?", competitionID, problemID).
-			UpdateColumn("submit_count", gorm.Expr("submit_count + ?", 1)).Error; err != nil {
-			return err
+		if updateCompetitionProblemStats {
+			if err := tx.
+				Model(&competition_model.CompetitionProblem{}).
+				Where("competition_id = ? AND problem_id = ?", competitionID, problemID).
+				UpdateColumn("submit_count", gorm.Expr("submit_count + ?", 1)).Error; err != nil {
+				return err
+			}
 		}
 
 		if !accepted {
@@ -89,7 +108,7 @@ func SaveCompetitionJudgeResult(
 			return err
 		}
 
-		if !isFirstAC {
+		if !updateCompetitionProblemStats || !isFirstCompetitionProblemAC {
 			return nil
 		}
 

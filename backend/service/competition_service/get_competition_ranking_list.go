@@ -27,7 +27,7 @@ func GetCompetitionRankingList(req *competition_model.GetCompetitionRankingListR
 
 	var rankingList []competition_model.CompetitionRankingListItem
 	if !competition.EndTime.IsZero() && now.After(competition.EndTime.Add(time.Hour)) {
-		rankingList, err = competition_mysql.GetCompetitionRankingList(req.CompetitionID, competition.StartTime)
+		rankingList, err = competition_mysql.GetCompetitionRankingList(req.CompetitionID, competition.StartTime, competition.EndTime)
 	} else {
 		rankingList, err = competition_redis.GetCompetitionRankingList(req.CompetitionID)
 	}

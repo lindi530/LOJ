@@ -118,7 +118,9 @@ const userMenuOptions = computed(() => [
   { type: 'divider', key: 'divider' },
   { label: '登出', key: 'logout', icon: 'bi bi-box-arrow-right', danger: true }
 ])
-const userDropdownMenuProps = { class: 'loj-user-dropdown-menu' }
+function userDropdownMenuProps() {
+  return { class: 'loj-user-dropdown-menu' }
+}
 
 const leftLinks = computed(() => [
   { label: '帖子', to: '/' },
@@ -382,11 +384,29 @@ function handleLoginSuccess() {
 }
 
 :global(.loj-user-dropdown-menu .n-dropdown-option-body) {
+  display: flex;
+  align-items: center;
   min-height: auto;
   padding: 0.55rem 0.7rem;
   border-radius: 0.6rem;
   color: #334155;
   font-weight: 500;
+}
+
+:global(.loj-user-dropdown-menu .n-dropdown-option-body__prefix) {
+  display: inline-flex;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+}
+
+:global(.loj-user-dropdown-menu .n-dropdown-option-body__label) {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 :global(.loj-user-dropdown-menu .n-dropdown-option-body:hover),
@@ -401,13 +421,23 @@ function handleLoginSuccess() {
 }
 
 :global(.loj-user-dropdown-icon) {
-  margin-right: 0.5rem;
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0;
   font-size: 1rem;
+  line-height: 1;
 }
 
 :global(.loj-user-dropdown-label),
 :global(.loj-user-dropdown-icon) {
   color: inherit;
+}
+
+:global(.loj-user-dropdown-label) {
+  line-height: 1;
 }
 
 :global(.loj-user-dropdown-label.is-danger),

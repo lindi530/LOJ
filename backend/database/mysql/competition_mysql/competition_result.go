@@ -30,10 +30,10 @@ type competitionRankingProblemStat struct {
 	wrongCount int
 }
 
-func GetCompetitionRankingList(competitionID int64, startTime time.Time) (data []competition_model.CompetitionRankingListItem, err error) {
+func GetCompetitionRankingList(competitionID int64, startTime time.Time, endTime time.Time) (data []competition_model.CompetitionRankingListItem, err error) {
 	var submissions []competitionRankingSubmission
 	err = global.DB.Transaction(func(tx *gorm.DB) error {
-		return tx.
+		query := tx.
 			Table("competition_submissions AS cs").
 			Select(`
 				cs.user_id,
@@ -46,7 +46,12 @@ func GetCompetitionRankingList(competitionID int64, startTime time.Time) (data [
 			Joins("JOIN problem_submissions AS ps ON ps.id = cs.submission_id").
 			Joins("JOIN competition_problems AS cp ON cp.competition_id = cs.competition_id AND cp.problem_id = cs.problem_id").
 			Joins("LEFT JOIN competition_players AS cpl ON cpl.competition_id = cs.competition_id AND cpl.user_id = cs.user_id").
-			Where("cs.competition_id = ?", competitionID).
+			Where("cs.competition_id = ?", competitionID)
+		if !endTime.IsZero() {
+			query = query.Where("ps.created_at < ?", endTime)
+		}
+
+		return query.
 			Order("ps.created_at ASC").
 			Order("cs.id ASC").
 			Scan(&submissions).Error

@@ -11,6 +11,27 @@ import (
 )
 
 func HasOver(competitionID int64, now time.Time) (bool, string) {
+	status, msg := getCompetitionStatus(competitionID, now)
+	if msg != "" {
+		return true, msg
+	}
+
+	return competitionStatusResult(status)
+}
+
+func HasNotStarted(competitionID int64, now time.Time) (bool, string) {
+	status, msg := getCompetitionStatus(competitionID, now)
+	if msg != "" {
+		return true, msg
+	}
+	if status == competitionStatusNotStarted {
+		return true, constants.CompetitionSubmitMessageNotStarted
+	}
+
+	return false, ""
+}
+
+func getCompetitionStatus(competitionID int64, now time.Time) (int8, string) {
 	cache, exists, err := competition_redis.GetCompetitionStatus(competitionID)
 	if err != nil {
 		global.Logger.Error("get competition status cache failed:", competitionID, err)
@@ -26,12 +47,12 @@ func HasOver(competitionID int64, now time.Time) (bool, string) {
 				global.Logger.Error("save competition status failed:", competitionID, err)
 			}
 		}
-		return competitionStatusResult(status)
+		return status, ""
 	}
 
 	competition, err := competition_mysql.GetCompetitionTime(competitionID)
 	if err != nil {
-		return true, constants.CompetitionSubmitMessageDataQueryError
+		return 0, constants.CompetitionSubmitMessageDataQueryError
 	}
 
 	status := currentCompetitionStatus(competition, now)
@@ -46,7 +67,7 @@ func HasOver(competitionID int64, now time.Time) (bool, string) {
 		}
 	}
 
-	return competitionStatusResult(status)
+	return status, ""
 }
 
 func currentCompetitionStatus(competition competition_model.Competition, now time.Time) int8 {

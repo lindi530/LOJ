@@ -164,7 +164,11 @@ export default {
   createCompetition(data) {
     return request.post('/competition/create', data)
   },
-  enterCompetition(competitionId) {
+  enterCompetition(competitionId, data) {
+    if (data) {
+      return request.post(`/competition/${competitionId}/enter`, data)
+    }
+
     return request.post(`/competition/${competitionId}/enter`)
   },
   cancelCompetitionEntry(competitionId) {

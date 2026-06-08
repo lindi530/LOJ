@@ -24,7 +24,6 @@ func UpdateCompetitionRankingList(
 	userID int64,
 	userName string,
 	accepted bool,
-	isFirstAC bool,
 ) error {
 	ctx := context.Background()
 	userIDStr := strconv.FormatInt(userID, 10)
@@ -82,7 +81,7 @@ func UpdateCompetitionRankingList(
 		return expireCompetitionRankingKeys(ctx, expireAt, rankingKey, userNameKey, userProblemKey)
 	}
 
-	if isFirstAC {
+	if !solved {
 		wrongCount, err := global.RedisClient.HGet(ctx, userProblemKey, wrongCountField).Int64()
 		if errors.Is(err, redis.Nil) {
 			wrongCount = 0

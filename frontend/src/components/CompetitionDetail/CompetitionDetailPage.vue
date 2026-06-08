@@ -26,18 +26,76 @@
             />
 
             <section v-if="isUpcoming || (isRunning && !registered)" class="registration-stage" aria-label="竞赛报名">
-              <button
+              <form
                 v-if="!registered"
-                type="button"
-                class="enter-button"
-                :disabled="entering"
-                @click="requestEntry"
+                class="registration-panel"
+                novalidate
+                @submit.prevent="requestEntry"
               >
-                <span v-if="entering" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                {{ entering ? '报名中...' : '立即报名' }}
-              </button>
+                <div class="registration-panel__body">
+                  <fieldset v-if="requiresCompetitionPassword" class="fieldset p-0">
+                    <legend class="fieldset-legend">竞赛密码</legend>
+                    <div
+                      class="input input-lg w-full registration-password-field"
+                      :class="{
+                        'input-error': competitionPasswordError,
+                        'input-success': hasCompetitionPassword && !competitionPasswordError
+                      }"
+                    >
+                      <i class="bi bi-lock-fill opacity-60" aria-hidden="true"></i>
+                      <input
+                        ref="competitionPasswordInput"
+                        v-model="competitionPassword"
+                        :type="competitionPasswordVisible ? 'text' : 'password'"
+                        class="grow"
+                        placeholder="请输入竞赛密码"
+                        autocomplete="current-password"
+                        :disabled="entering"
+                        :aria-invalid="competitionPasswordError ? 'true' : 'false'"
+                        :aria-describedby="competitionPasswordError ? 'competition-entry-password-error' : undefined"
+                        @input="clearCompetitionPasswordError"
+                      >
+                      <i
+                        v-if="hasCompetitionPassword"
+                        class="bi bi-check-circle-fill registration-password-status"
+                        aria-label="已输入密码"
+                      ></i>
+                      <button
+                        type="button"
+                        class="registration-password-toggle"
+                        :disabled="entering || !hasCompetitionPassword"
+                        :aria-label="competitionPasswordVisible ? '隐藏密码' : '显示密码'"
+                        @click="toggleCompetitionPasswordVisible"
+                      >
+                        <i
+                          class="bi"
+                          :class="competitionPasswordVisible ? 'bi-eye-slash' : 'bi-eye'"
+                          aria-hidden="true"
+                        ></i>
+                      </button>
+                    </div>
+                    <p
+                      v-if="competitionPasswordError"
+                      id="competition-entry-password-error"
+                      class="label text-error"
+                    >
+                      {{ competitionPasswordError }}
+                    </p>
+                  </fieldset>
 
-              <div v-else class="registration-success" role="status">
+                  <button
+                    type="submit"
+                    class="btn btn-success registration-submit"
+                    :disabled="entering"
+                  >
+                    <span v-if="entering" class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                    <i v-else class="bi bi-play-circle-fill" aria-hidden="true"></i>
+                    {{ entering ? '报名中...' : '立即报名' }}
+                  </button>
+                </div>
+              </form>
+
+              <div v-else class="alert alert-success registration-success" role="status">
                 <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
                 <span>您已成功报名，请留意公告与开赛时间。</span>
               </div>
@@ -88,6 +146,10 @@ const entering = ref(false)
 const canceling = ref(false)
 const loginVisible = ref(false)
 const actionAfterLogin = ref('')
+const competitionPasswordInput = ref(null)
+const competitionPassword = ref('')
+const competitionPasswordError = ref('')
+const competitionPasswordVisible = ref(false)
 const now = ref(Date.now())
 let competitionRequestId = 0
 let clockId = null
@@ -99,12 +161,21 @@ const isUpcoming = computed(() => Number.isFinite(startTime.value) && now.value 
 const hasStarted = computed(() => Number.isFinite(startTime.value) && now.value >= startTime.value)
 const isRunning = computed(() => competition.value && getCompetitionPhase(competition.value, now.value) === 'running')
 const canViewStartedContent = computed(() => hasStarted.value && (!isRunning.value || registered.value))
+const requiresCompetitionPassword = computed(() => (
+  Boolean(competition.value?.password_hash) ||
+  competition.value?.visibility === false ||
+  Number(competition.value?.visibility) === 0
+))
+const hasCompetitionPassword = computed(() => Boolean(competitionPassword.value.trim()))
 
 async function loadCompetition(detail) {
   const requestCompetitionId = String(competitionId.value || '')
   const requestId = ++competitionRequestId
   error.value = ''
   registered.value = false
+  competitionPassword.value = ''
+  competitionPasswordError.value = ''
+  competitionPasswordVisible.value = false
 
   if (!requestCompetitionId) {
     loading.value = false
@@ -181,7 +252,39 @@ function requireLogin(action) {
   return false
 }
 
+function clearCompetitionPasswordError() {
+  if (competitionPasswordError.value) {
+    competitionPasswordError.value = ''
+  }
+}
+
+function toggleCompetitionPasswordVisible() {
+  if (hasCompetitionPassword.value && !entering.value) {
+    competitionPasswordVisible.value = !competitionPasswordVisible.value
+  }
+}
+
+function validateCompetitionPassword() {
+  if (!requiresCompetitionPassword.value) {
+    competitionPasswordError.value = ''
+    return true
+  }
+
+  if (competitionPassword.value.trim()) {
+    competitionPasswordError.value = ''
+    return true
+  }
+
+  competitionPasswordError.value = '请输入竞赛密码后再报名。'
+  competitionPasswordInput.value?.focus()
+  return false
+}
+
 function requestEntry() {
+  if (!validateCompetitionPassword()) {
+    return
+  }
+
   if (requireLogin('entry')) {
     enterCompetition()
   }
@@ -209,15 +312,25 @@ async function enterCompetition() {
     return
   }
 
+  if (!validateCompetitionPassword()) {
+    return
+  }
+
+  const payload = requiresCompetitionPassword.value
+    ? { password: competitionPassword.value.trim() }
+    : undefined
+
   entering.value = true
   try {
-    const resp = await api.enterCompetition(competitionId.value)
+    const resp = await api.enterCompetition(competitionId.value, payload)
     if (resp.code !== 0) {
       message.error(resp.message || '报名失败，请稍后重试。')
       return
     }
 
     registered.value = true
+    competitionPassword.value = ''
+    competitionPasswordVisible.value = false
     changePlayerCount(1)
     message.success('报名成功')
   } catch (requestError) {
@@ -339,52 +452,111 @@ onUnmounted(() => {
   margin: 0.65rem 0;
 }
 
-.enter-button {
+.registration-panel {
+  width: 100%;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #dfe8ee;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.32rem 1rem rgba(30, 45, 60, 0.045);
+}
+
+.registration-panel__body {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.registration-panel .fieldset {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  min-width: 0;
+}
+
+.registration-panel .fieldset-legend {
+  margin: 0;
+  padding: 0;
+  color: #172438;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.registration-panel .input {
+  min-height: 3rem;
+  color: #172438;
+  background: #fff;
+  border-color: #cfd9e3;
+  border-radius: 0.45rem;
+  box-shadow: none;
+}
+
+.registration-password-field {
+  gap: 0.45rem;
+}
+
+.registration-password-field > i:first-child {
+  color: #748398;
+}
+
+.registration-password-field input {
+  color: #172438;
+  background: transparent;
+}
+
+.registration-password-field input::placeholder {
+  color: #8b97a8;
+}
+
+.registration-password-status {
+  color: #1ba37f;
+  font-size: 1rem;
+}
+
+.registration-password-toggle {
   display: inline-flex;
-  gap: 0.6rem;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  min-height: 5rem;
-  color: #fff;
-  font-size: 1.5rem;
-  font-weight: 600;
-  background: #22ae90;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: #607289;
+  background: transparent;
   border: 0;
-  border-radius: 0.45rem;
-  box-shadow: 0 0.7rem 1.35rem rgba(34, 174, 144, 0.25);
-  transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  border-radius: 0.35rem;
 }
 
-.enter-button:hover:not(:disabled) {
-  background: #178d74;
-  box-shadow: 0 0.85rem 1.5rem rgba(23, 141, 116, 0.3);
-  transform: translateY(-1px);
+.registration-password-toggle:hover:not(:disabled),
+.registration-password-toggle:focus-visible {
+  color: #178d74;
+  background: #edf8f4;
 }
 
-.enter-button:disabled {
-  opacity: 0.7;
+.registration-password-toggle:disabled {
+  color: #a7b3c1;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
-.enter-button:focus-visible {
-  outline: 3px solid rgba(34, 174, 144, 0.27);
-  outline-offset: 2px;
+.registration-submit {
+  width: 100%;
+  min-height: 3.05rem;
+  color: #fff;
+  font-size: 1.08rem;
+  font-weight: 600;
+  --bs-btn-bg: #22ae90;
+  --bs-btn-border-color: #22ae90;
+  --bs-btn-hover-bg: #178d74;
+  --bs-btn-hover-border-color: #178d74;
+  --bs-btn-active-bg: #147762;
+  --bs-btn-active-border-color: #147762;
+  --bs-btn-disabled-bg: #22ae90;
+  --bs-btn-disabled-border-color: #22ae90;
 }
 
 .registration-success {
-  display: inline-flex;
-  gap: 0.6rem;
-  align-items: center;
   width: 100%;
   justify-content: center;
-  min-height: 4rem;
-  padding: 0.94rem 1.25rem;
-  color: #087b61;
-  font-size: 0.95rem;
-  font-weight: 500;
-  background: #e9fbf5;
-  border: 1px solid #c5f0e3;
-  border-radius: 0.45rem;
+  border-radius: 0.5rem;
 }
 
 .registration-success i {
@@ -417,14 +589,8 @@ onUnmounted(() => {
     margin: 0.2rem 0;
   }
 
-  .enter-button {
-    min-height: 3.45rem;
-    font-size: 1.08rem;
-  }
-
   .registration-success {
     align-items: flex-start;
-    border-radius: 0.85rem;
     line-height: 1.5;
   }
 }

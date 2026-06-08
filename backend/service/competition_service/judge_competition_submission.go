@@ -29,14 +29,14 @@ func judgeCompetitionSubmission(job competitionSubmitJob) competitionSubmitResul
 		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageDataQueryError)
 	}
 
-	now := time.Now()
-	if competition.StartTime.IsZero() || now.Before(competition.StartTime) {
+	submitTime := job.SubmitTime
+	if submitTime.IsZero() {
+		submitTime = time.Now()
+	}
+
+	if competition.StartTime.IsZero() || submitTime.Before(competition.StartTime) {
 		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
 		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageNotStarted)
-	}
-	if !competition.EndTime.IsZero() && now.After(competition.EndTime) {
-		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
-		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageEnded)
 	}
 	if len(examples) == 0 {
 		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
@@ -57,7 +57,6 @@ func judgeCompetitionSubmission(job competitionSubmitJob) competitionSubmitResul
 
 	global.Logger.Error("state, score, accepted: ", state, score, accepted)
 
-	submitTime := time.Now()
 	problemSubmission := &problem_submission_model.ProblemSubmission{
 		UserId:      job.UserID,
 		ProblemId:   uint(competitionProblem.ProblemID),
@@ -75,27 +74,30 @@ func judgeCompetitionSubmission(job competitionSubmitJob) competitionSubmitResul
 		job.UserID,
 		problemSubmission,
 		accepted,
+		competition.EndTime,
+		shouldUpdateCompetitionProblemStats(competition.EndTime, submitTime),
 	)
 	if err != nil {
 		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
 		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageSaveSubmissionFailed)
 	}
 
-	if err := competition_redis.UpdateCompetitionRankingList(
-		job.CompetitionID,
-		competition.StartTime,
-		competition.EndTime,
-		submitTime,
-		competitionProblem.ProblemID,
-		competitionProblem.ProblemNumber,
-		job.UserID,
-		job.UserName,
-		accepted,
-		isFirstAC,
-	); err != nil {
-		global.Logger.Error("update competition ranking list failed:", err)
-		ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
-		return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageSaveSubmissionFailed)
+	if shouldUpdateCompetitionRanking(competition.EndTime, submitTime) {
+		if err := competition_redis.UpdateCompetitionRankingList(
+			job.CompetitionID,
+			competition.StartTime,
+			competition.EndTime,
+			submitTime,
+			competitionProblem.ProblemID,
+			competitionProblem.ProblemNumber,
+			job.UserID,
+			job.UserName,
+			accepted,
+		); err != nil {
+			global.Logger.Error("update competition ranking list failed:", err)
+			ws_service.WsHub.SendEditData(message, constants.JudgeStatusSystemError)
+			return failedCompetitionSubmitResult(constants.CompetitionSubmitMessageSaveSubmissionFailed)
+		}
 	}
 
 	if accepted {
@@ -114,4 +116,12 @@ func judgeCompetitionSubmission(job competitionSubmitJob) competitionSubmitResul
 			Results:      runResult,
 		},
 	}
+}
+
+func shouldUpdateCompetitionRanking(endTime time.Time, submitTime time.Time) bool {
+	return endTime.IsZero() || submitTime.Before(endTime)
+}
+
+func shouldUpdateCompetitionProblemStats(endTime time.Time, submitTime time.Time) bool {
+	return endTime.IsZero() || submitTime.Before(endTime)
 }

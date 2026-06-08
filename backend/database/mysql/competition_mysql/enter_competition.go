@@ -7,6 +7,19 @@ import (
 	"gorm.io/gorm"
 )
 
+func GetCompetitionAuthInfo(competitionID int64) (competition competition_model.Competition, exist bool, err error) {
+	tx := global.DB.
+		Select("id, visibility, password_hash").
+		Where("id = ?", competitionID).
+		Find(&competition)
+
+	if tx.Error != nil {
+		return competition, false, tx.Error
+	}
+
+	return competition, tx.RowsAffected > 0, nil
+}
+
 func EnterCompetition(enterPlayer *competition_model.CompetitionPlayer) (bool, error) {
 	tx := global.DB.
 		Model(&competition_model.Competition{}).
