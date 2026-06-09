@@ -15,6 +15,49 @@ var (
 )
 
 const (
+	SaberInitialRating     = 1500
+	SaberInitialLevelIndex = 3
+	SaberPKRatingDelta     = 25
+)
+
+const (
+	SaberLevelBlackIron = "黑铁"
+	SaberLevelBronze    = "黄铜"
+	SaberLevelSilver    = "白银"
+	SaberLevelGold      = "黄金"
+	SaberLevelPlatinum  = "铂金"
+	SaberLevelEmerald   = "翡翠"
+	SaberLevelDiamond   = "钻石"
+	SaberLevelMaster    = "大师"
+	SaberLevelGrand     = "宗师"
+	SaberLevelKing      = "王者"
+)
+
+var SaberLevels = []string{
+	SaberLevelBlackIron,
+	SaberLevelBronze,
+	SaberLevelSilver,
+	SaberLevelGold,
+	SaberLevelPlatinum,
+	SaberLevelEmerald,
+	SaberLevelDiamond,
+	SaberLevelMaster,
+	SaberLevelGrand,
+	SaberLevelKing,
+}
+
+func SaberLevelByRating(rating int) string {
+	levelIndex := SaberInitialLevelIndex + (rating-SaberInitialRating)/100
+	if levelIndex < 0 {
+		return SaberLevels[0]
+	}
+	if levelIndex >= len(SaberLevels) {
+		return SaberLevels[len(SaberLevels)-1]
+	}
+	return SaberLevels[levelIndex]
+}
+
+const (
 	CompetitionSubmitQueue             = "competition_submit_queue"
 	CompetitionSubmitConsumerTagPrefix = "competition-submit-"
 	CompetitionSubmitContentTypeJSON   = "application/json"

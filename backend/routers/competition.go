@@ -14,16 +14,16 @@ func CompetitionRouters(router *gin.RouterGroup) {
 	auth.GET("/:competition_id", api.ApiGroups.CompetitionAPI.GetCompetition)
 	auth.GET("/ranking", api.ApiGroups.CompetitionAPI.GetRanking)
 	auth.GET("/history/:user_id", api.ApiGroups.CompetitionAPI.GetCompetitionHistory)
-
+	auth.GET("/:competition_id/ranking_list", api.ApiGroups.CompetitionAPI.GetCompetitionRankingList)
+	auth.GET("/:competition_id/submissions", api.ApiGroups.CompetitionAPI.GetCompetitionSubmissions)
+	auth.GET("/:competition_id/problems", api.ApiGroups.CompetitionAPI.GetCompetitionProblems)
 	auth.Use(jwt.JWTAuthMiddleware())
 	{
 		auth.POST("/create", api.ApiGroups.CompetitionAPI.CreateCompetition)
 		auth.POST("/:competition_id/enter", api.ApiGroups.CompetitionAPI.EnterCompetition)
-		auth.GET("/:competition_id/has_entered", api.ApiGroups.CompetitionAPI.HasEnterCompetition)
-		auth.GET("/:competition_id/problems", api.ApiGroups.CompetitionAPI.GetCompetitionProblems)
-		auth.GET("/:competition_id/ranking_list", api.ApiGroups.CompetitionAPI.GetCompetitionRankingList)
 		auth.POST("/:competition_id/submit/:problem_number", api.ApiGroups.CompetitionAPI.SubmitCompetitionProblem)
-		auth.GET("/:competition_id/submissions", api.ApiGroups.CompetitionAPI.GetCompetitionSubmissions)
+
+		auth.GET("/:competition_id/has_entered", api.ApiGroups.CompetitionAPI.HasEnterCompetition)
 		auth.GET("/:competition_id/:problem_number", api.ApiGroups.CompetitionAPI.GetCompetitionProblemInfo)
 	}
 }

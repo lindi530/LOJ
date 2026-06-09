@@ -45,6 +45,8 @@
     <section v-else-if="activeTab === 'problems'" class="content-card__panel content-card__panel--flush" aria-label="竞赛题目内容">
       <CompetitionProblems
         :competition-id="competition.id"
+        :is-login="isLogin"
+        @request-login="$emit('request-login')"
       />
     </section>
 
@@ -96,10 +98,14 @@ const props = defineProps({
   canceling: {
     type: Boolean,
     default: false
+  },
+  isLogin: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits(['cancel'])
+defineEmits(['cancel', 'request-login'])
 
 const route = useRoute()
 const router = useRouter()

@@ -3,6 +3,7 @@ package saber_stats_mysql
 import (
 	"GO1/global"
 	"GO1/models/saber_model"
+	"GO1/pkg/constants"
 	"time"
 )
 
@@ -19,8 +20,8 @@ func GetSaberStat(stat *saber_model.SaberStat, userid int64) error {
 	err := global.DB.
 		Where(saber_model.SaberStat{UserID: userid}).
 		Attrs(saber_model.SaberStat{ // 你想要的初始值，而不是零
-			Rating:       1500,
-			Level:        "黄铜",
+			Rating:       constants.SaberInitialRating,
+			Level:        constants.SaberLevelGold,
 			Wins:         0,
 			TotalMatches: 0,
 			CreatedAT:    time.Now(),

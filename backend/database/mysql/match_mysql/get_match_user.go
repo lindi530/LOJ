@@ -5,6 +5,7 @@ import (
 	"GO1/models/match_model"
 	"GO1/models/saber_model"
 	"GO1/models/user_model"
+	"GO1/pkg/constants"
 	"time"
 )
 
@@ -24,8 +25,8 @@ func GetMatchUser(user *match_model.MatchUser, userid int64) {
 	if err := global.DB.
 		Where("user_id = ?", userid).
 		Attrs(saber_model.SaberStat{ // 你想要的初始值，而不是零
-			Rating:       1500,
-			Level:        "黄铜",
+			Rating:       constants.SaberInitialRating,
+			Level:        constants.SaberLevelGold,
 			Wins:         0,
 			TotalMatches: 0,
 			CreatedAT:    time.Now(),

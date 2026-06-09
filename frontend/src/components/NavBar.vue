@@ -10,8 +10,6 @@
     </n-drawer-content>
   </n-drawer>
 
-  <SaberAPP v-model:visible="saberVisible" class="saber-fix" />
-
   <nav
     class="navbar navbar-expand-md navbar-light fixed-top loj-navbar"
   >
@@ -94,7 +92,6 @@ import { closeWebSocket } from '@/composables/useWebSocket'
 import LoginModal from './account/LoginModal.vue'
 import RegisterModal from './account/RegisterModal.vue'
 import ChatAPP from '@/views/UserChatView.vue'
-import SaberAPP from './saber/Interface.vue'
 import api from '@/api'
 
 const router = useRouter()
@@ -105,7 +102,6 @@ const loginVisible = ref(false)
 const registerVisible = ref(false)
 const chatVisible = ref(false)
 const placement = ref('right')
-const saberVisible = ref(false)
 
 const refreshToken = computed(() => store.getters['user/refreshToken'] || localStorage.refreshToken)
 const isLogin = computed(() => store.getters['user/isLogin'])
@@ -127,22 +123,14 @@ const leftLinks = computed(() => [
   { label: '用户列表', to: '/users/userList' },
   { label: '题库', to: '/problems' },
   { label: '竞赛', to: '/competition' },
-  { label: '对战', to: '/' },
+  { label: '对战', to: '/saber' },
   { label: '题目上传', to: '/upload/problem' },
   { label: '测试', to: '/test' }
 ])
 
 function handleLinkClick(item) {
   isOpen.value = false
-
-  switch (item.label) {
-    case '对战':
-      saberVisible.value = true
-      break
-    default:
-      router.push(item.to)
-      break
-  }
+  router.push(item.to)
 }
 
 function openChat() {
@@ -570,14 +558,4 @@ function handleLoginSuccess() {
   }
 }
 
-:deep(.saber-fix) {
-  position: relative;
-  z-index: 9999 !important;
-}
-
-:deep(.saber-fix .content-text.btn) {
-  pointer-events: auto !important;
-  position: relative !important;
-  z-index: 10000 !important;
-}
 </style>

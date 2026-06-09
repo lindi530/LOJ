@@ -25,6 +25,7 @@
         :key="problem.problem_id || problem.problem_number"
         class="problem-table__row"
         role="row"
+        @click.capture="guardProblemNavigation"
         :to="{
           name: 'CompetitionProblem',
           params: {
@@ -58,8 +59,14 @@ const props = defineProps({
   competitionId: {
     type: [Number, String],
     required: true
+  },
+  isLogin: {
+    type: Boolean,
+    default: false
   }
 })
+
+const emit = defineEmits(['request-login'])
 
 const problems = ref([])
 const loading = ref(false)
@@ -68,6 +75,15 @@ const error = ref('')
 function count(value) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : 0
+}
+
+function guardProblemNavigation(event) {
+  if (props.isLogin) {
+    return
+  }
+
+  event.preventDefault()
+  emit('request-login')
 }
 
 async function loadProblems() {

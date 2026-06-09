@@ -106,7 +106,9 @@
               :has-started="canViewStartedContent"
               :can-cancel="isUpcoming && registered"
               :canceling="canceling"
+              :is-login="isLogin"
               @cancel="requestCancellation"
+              @request-login="requestProblemLogin"
             />
           </div>
         </template>
@@ -294,6 +296,11 @@ function requestCancellation() {
   if (requireLogin('cancel')) {
     cancelEntry()
   }
+}
+
+function requestProblemLogin() {
+  actionAfterLogin.value = ''
+  loginVisible.value = true
 }
 
 function continueAfterLogin() {

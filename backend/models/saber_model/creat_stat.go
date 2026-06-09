@@ -1,12 +1,15 @@
 package saber_model
 
-import "time"
+import (
+	"GO1/pkg/constants"
+	"time"
+)
 
 func CreateSaberStat(userid int64) SaberStat {
 	saberStat := SaberStat{
 		UserID:       userid,
-		Rating:       1500,
-		Level:        "黄铜",
+		Rating:       constants.SaberInitialRating,
+		Level:        constants.SaberLevelGold,
 		Wins:         0,
 		TotalMatches: 0,
 		CreatedAT:    time.Now(),
