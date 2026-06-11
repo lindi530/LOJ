@@ -92,6 +92,12 @@ export default {
   getProblemList() {
     return request.get(`/problems`)
   },
+  getCourseList() {
+    return request.get(`/course`)
+  },
+  courseCreate(data) {
+    return request.post(`/course/create`, data)
+  },
   submitCode(problemID, data) { 
     return request.post(`/problems/${problemID}/submit`, data)
   },

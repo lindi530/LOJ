@@ -1,9 +1,6 @@
 package upload_model
 
 import (
-	"GO1/global"
-	"gorm.io/gorm"
-	"os"
 	"time"
 )
 
@@ -18,19 +15,5 @@ type ResponseUploadImages struct {
 	FileName string
 	Result   string
 	Msg      string
-}
-
-var WriteImageList = []string{
-	".jpg",
-	".png",
-	".gif",
-}
-
-func (I *Image) BeforeDelete(db *gorm.DB) error {
-	err := os.Remove(I.Path)
-	if err != nil {
-		global.Logger.Error("删除失败！")
-		return err
-	}
-	return nil
+	Path     string
 }

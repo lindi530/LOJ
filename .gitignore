@@ -54,5 +54,5 @@ backend_uploads/
 *.tmp
 *.bak
 *.xml
-
+*.codex-logs
 # design-md/

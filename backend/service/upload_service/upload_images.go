@@ -1,17 +1,16 @@
 package upload_service
 
 import (
-	"GO1/database/mysql/image"
 	"GO1/global"
 	"GO1/models/upload_model"
-	"GO1/pkg/md5"
+	pkg_image "GO1/pkg/image"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func UploadImage(c *gin.Context, file []*multipart.FileHeader, rsp *[]upload_model.ResponseUploadImages) {
@@ -28,62 +27,39 @@ func UploadImage(c *gin.Context, file []*multipart.FileHeader, rsp *[]upload_mod
 
 		size := float64(file.Size) / 1024 / 1024
 		if size >= imageLimitSize {
-			addResponse(rsp, filename, "上传失败", fmt.Sprintf("图片大小为：%dM，不能超过：%dM", file.Size, imageLimitSize))
+			addResponse(rsp, filename, "上传失败", fmt.Sprintf("图片大小为：%.2fM，不能超过：%.2fM", size, imageLimitSize))
 			continue
 		}
-		filePath := dirPath + "/" + filename
 
-		fileObj, err := file.Open()
+		filePath := dirPath + "/" + filename
+		uploadedImage, err := pkg_image.SaveUploadedImageByMD5(c, file, filePath)
 		if err != nil {
 			global.Logger.Error(err)
-			addResponse(rsp, filename, "上传失败", "解析错误1")
-			continue
-		}
-		byteData, err := io.ReadAll(fileObj)
-		if err != nil {
-			addResponse(rsp, filename, "上传失败", "解析错误2")
-			continue
-		}
-		md5Str := md5.MD5(byteData)
-
-		if image.CheckImage(md5Str) {
-			addResponse(rsp, filename, "上传失败", "该图片已存在")
-			continue
-		}
-
-		err = image.CreateImage(md5Str, filename, filePath)
-		if err != nil {
 			addResponse(rsp, filename, "上传失败", "保存失败")
 			continue
 		}
 
-		err = c.SaveUploadedFile(file, filePath)
-		if err != nil {
-			addResponse(rsp, filename, "上传失败", "保存失败")
+		if uploadedImage.Existed {
+			addResponse(rsp, filename, "上传成功", "图片已存在", uploadedImage.Path)
 			continue
 		}
-
-		addResponse(rsp, filename, "上传成功", "保存成功")
+		addResponse(rsp, filename, "上传成功", "保存成功", uploadedImage.Path)
 	}
 }
 
 func ensureDir(dirPath string) {
-	// 检查路径是否存在
 	_, err := os.Stat(dirPath)
 	if err == nil {
 		return
 	}
-	// 如果错误是因为路径不存在
 	if os.IsNotExist(err) {
-		// 创建目录（包括所有必要的父目录）
 		os.MkdirAll(dirPath, 0755)
 	}
-	// 其他类型的错误
 }
 
 func inWriteList(ext string) bool {
 	ext = strings.ToLower(ext)
-	for _, EXT := range upload_model.WriteImageList {
+	for _, EXT := range pkg_image.WriteImageList {
 		if EXT == ext {
 			return true
 		}
@@ -91,10 +67,16 @@ func inWriteList(ext string) bool {
 	return false
 }
 
-func addResponse(rsp *[]upload_model.ResponseUploadImages, filename string, result string, msg string) {
+func addResponse(rsp *[]upload_model.ResponseUploadImages, filename string, result string, msg string, paths ...string) {
+	path := ""
+	if len(paths) > 0 {
+		path = paths[0]
+	}
+
 	*rsp = append(*rsp, upload_model.ResponseUploadImages{
 		FileName: filename,
 		Result:   result,
 		Msg:      msg,
+		Path:     path,
 	})
 }

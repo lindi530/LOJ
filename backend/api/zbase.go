@@ -6,6 +6,7 @@ import (
 	"GO1/api/chat_api"
 	"GO1/api/comment_api"
 	"GO1/api/competition_api"
+	"GO1/api/course_api"
 	"GO1/api/image_api"
 	"GO1/api/match_api"
 	"GO1/api/message_api"
@@ -32,6 +33,7 @@ type ApiGroup struct {
 	UploadAPI      upload_api.UploadAPI
 	CalendarAPI    calendar_api.CalendarAPI
 	CompetitionAPI competition_api.CompetitionAPI
+	CourseAPI      course_api.CourseAPI
 }
 
 var ApiGroups = new(ApiGroup)

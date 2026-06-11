@@ -4,7 +4,7 @@ import PostsView from '../views/PostsListView.vue'
 import UsersView from '../views/UsersProfileView.vue'
 import NotFound from '@/components/NotFound.vue'
 import UserList from '@/views/UserListView.vue'
-import Test from '@/components/test/Test.vue'
+import Test from '@/views/TestView.vue'
 import Chat from '@/views/UserChatView.vue'
 import UserProfile from '@/components/setting/UserProfile.vue'
 import PostDetail from '@/components/posts/PostDetail.vue'
@@ -17,6 +17,8 @@ import CompetitionCreate from '@/views/CompetitionCreateView.vue'
 import CompetitionDetail from '@/views/CompetitionDetailView.vue'
 import CompetitionProblem from '@/views/CompetitionProblemView.vue'
 import Saber from '@/views/SaberView.vue'
+import Course from '@/views/CourseView.vue'
+import CoursePublish from '@/views/CoursePublishView.vue'
 import store from '@/store'
 
 const routes = [
@@ -86,6 +88,21 @@ const routes = [
     path: '/saber',
     name: 'Saber',
     component: Saber
+  },
+  {
+    path: '/course',
+    name: 'Course',
+    component: Course
+  },
+  {
+    path: '/course/publish',
+    name: 'CoursePublish',
+    component: CoursePublish
+  },
+  {
+    path: '/course/:course_id',
+    name: 'CourseDetail',
+    component: Course
   },
   {
     path: '/competition/create',

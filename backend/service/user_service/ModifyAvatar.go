@@ -1,18 +1,16 @@
 package user_service
 
 import (
-	mysql_image "GO1/database/mysql/image"
 	"GO1/database/mysql/user_mysql"
 	"GO1/global"
-	"GO1/models/upload_model"
 	"GO1/models/user_model"
-	"GO1/pkg/md5"
-	"github.com/gin-gonic/gin"
-	"io"
+	pkg_image "GO1/pkg/image"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func ModifyAvatar(c *gin.Context, userId int64, avatar *multipart.FileHeader) gin.H {
@@ -43,40 +41,16 @@ func ModifyAvatar(c *gin.Context, userId int64, avatar *multipart.FileHeader) gi
 	ensureDir(dirPath)
 
 	filePath := dirPath + "/" + avatar.Filename
+	uploadedImage, err := pkg_image.SaveUploadedImageByMD5(c, avatar, filePath)
+	if err != nil {
+		return gin.H{
+			"avatarPath": "",
+			"msg":        "文件保存失败",
+		}
+	}
 
-	fileObj, err := avatar.Open()
-	if err != nil {
-		return gin.H{
-			"avatarPath": "",
-			"msg":        "文件解析失败",
-		}
-	}
-	byteData, err := io.ReadAll(fileObj)
-	if err != nil {
-		return gin.H{
-			"avatarPath": "",
-			"msg":        "文件解析失败",
-		}
-	}
-	fileMD5 := md5.MD5(byteData)
-	if !mysql_image.CheckImage(fileMD5) {
-		err = mysql_image.CreateImage(fileMD5, avatar.Filename, filePath)
-		if err != nil {
-			return gin.H{
-				"avatarPath": "",
-				"msg":        "文件保存失败",
-			}
-		}
-		err = c.SaveUploadedFile(avatar, filePath)
-		if err != nil {
-			return gin.H{
-				"avatarPath": "",
-				"msg":        "文件保存失败",
-			}
-		}
-	}
-	user_mysql.ModifyAvatar(userId, fileMD5)
-	avatarPath := user_model.GetAvatarPath(fileMD5)
+	user_mysql.ModifyAvatar(userId, uploadedImage.MD5)
+	avatarPath := user_model.GetAvatarPath(uploadedImage.MD5)
 	return gin.H{
 		"avatar": avatarPath,
 		"msg":    "上传成功",
@@ -84,22 +58,18 @@ func ModifyAvatar(c *gin.Context, userId int64, avatar *multipart.FileHeader) gi
 }
 
 func ensureDir(dirPath string) {
-	// 检查路径是否存在
 	_, err := os.Stat(dirPath)
 	if err == nil {
 		return
 	}
-	// 如果错误是因为路径不存在
 	if os.IsNotExist(err) {
-		// 创建目录（包括所有必要的父目录）
 		os.MkdirAll(dirPath, 0755)
 	}
-	// 其他类型的错误
 }
 
 func inWriteList(ext string) bool {
 	ext = strings.ToLower(ext)
-	for _, EXT := range upload_model.WriteImageList {
+	for _, EXT := range pkg_image.WriteImageList {
 		if EXT == ext {
 			return true
 		}

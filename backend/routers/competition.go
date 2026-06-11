@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CompetitionRouters(router *gin.RouterGroup) {
+func CompetitionRouter(router *gin.RouterGroup) {
 	auth := router.Group("/competition")
 
 	auth.GET("/status", api.ApiGroups.CompetitionAPI.GetCompetitions)
