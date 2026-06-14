@@ -12,6 +12,7 @@ type Course struct {
 	LessonCount  int       `json:"lessonCount"`
 	StudentCount int       `json:"studentCount"`
 	Status       int8      `json:"status"`
+	Sort         int       `json:"sort"`
 	CreatedBy    *int64    `json:"createdBy"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
@@ -28,49 +29,57 @@ type CourseChapter struct {
 }
 
 type VideoAsset struct {
-	ID        int64     `json:"id"`
-	Title     *string   `json:"title"`
-	URL       string    `json:"url"`
-	Duration  int       `json:"duration"`
-	SizeBytes *int64    `json:"sizeBytes"`
-	CreatedBy *int64    `json:"createdBy"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID        int64  `json:"id"`
+	URL       string `json:"url"`
+	Duration  int    `json:"duration"`
+	SizeBytes *int64 `json:"sizeBytes"`
 }
 
-type CourseLesson struct {
-	ID            int64     `json:"id"`
-	CourseID      int64     `json:"courseId"`
-	ChapterID     int64     `json:"chapterId"`
-	VideoAssetID  *int64    `json:"videoAssetId"`
-	Title         string    `json:"title"`
-	Duration      int       `json:"duration"`
-	IsFreePreview int8      `json:"isFreePreview"`
-	Sort          int       `json:"sort"`
-	Status        int8      `json:"status"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+//type CourseLesson struct {
+//	ID            int64     `json:"id"`
+//	CourseID      int64     `json:"courseId"`
+//	ChapterID     int64     `json:"chapterId"`
+//	VideoAssetID  *int64    `json:"videoAssetId"`
+//	Title         string    `json:"title"`
+//	Duration      int       `json:"duration"`
+//	IsFreePreview int8      `json:"isFreePreview"`
+//	Sort          int       `json:"sort"`
+//	Status        int8      `json:"status"`
+//	CreatedAt     time.Time `json:"createdAt"`
+//	UpdatedAt     time.Time `json:"updatedAt"`
+//}
+
+type ChapterProblem struct {
+	ID        int64 `json:"id"`
+	CourseID  int64 `json:"courseId"`
+	ChapterID int64 `json:"chapterId"`
+	ProblemID int64 `json:"problemId"`
+	Sort      int   `json:"sort"`
+	//CreatedAt   time.Time `json:"createdAt"`
+	//ProblemType int8      `json:"problemType"`
+	//LessonID    int64     `json:"lessonId"`
 }
 
-type LessonProblem struct {
-	ID          int64     `json:"id"`
-	CourseID    int64     `json:"courseId"`
-	LessonID    int64     `json:"lessonId"`
-	ProblemID   int64     `json:"problemId"`
-	ProblemType int8      `json:"problemType"`
-	Sort        int       `json:"sort"`
-	CreatedAt   time.Time `json:"createdAt"`
+type ChapterVideo struct {
+	ID        int64 `json:"id"`
+	CourseID  int64 `json:"courseId"`
+	ChapterID int64 `json:"chapterId"`
+	VideoID   int64 `json:"videoId"`
+	//ProblemType int8      `json:"problemType"`
+	//CreatedAt   time.Time `json:"createdAt"`
+	//LessonID    int64     `json:"lessonId"`
 }
 
-type LessonProgress struct {
-	ID              int64      `json:"id"`
-	UserID          int64      `json:"userId"`
-	CourseID        int64      `json:"courseId"`
-	LessonID        int64      `json:"lessonId"`
-	LastPosition    int        `json:"lastPosition"`
-	WatchedSeconds  int        `json:"watchedSeconds"`
-	ProgressPercent float64    `json:"progressPercent"`
-	IsFinished      int8       `json:"isFinished"`
-	FinishedAt      *time.Time `json:"finishedAt"`
-	CreatedAt       time.Time  `json:"createdAt"`
-	UpdatedAt       time.Time  `json:"updatedAt"`
-}
+//type LessonProgress struct {
+//	ID              int64      `json:"id"`
+//	UserID          int64      `json:"userId"`
+//	CourseID        int64      `json:"courseId"`
+//	LessonID        int64      `json:"lessonId"`
+//	LastPosition    int        `json:"lastPosition"`
+//	WatchedSeconds  int        `json:"watchedSeconds"`
+//	ProgressPercent float64    `json:"progressPercent"`
+//	IsFinished      int8       `json:"isFinished"`
+//	FinishedAt      *time.Time `json:"finishedAt"`
+//	CreatedAt       time.Time  `json:"createdAt"`
+//	UpdatedAt       time.Time  `json:"updatedAt"`
+//}

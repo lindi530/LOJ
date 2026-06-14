@@ -1,6 +1,6 @@
 <template>
   <RouterLink
-    class="card border-0 shadow-sm text-reset text-decoration-none h-100 w-100"
+    class="card border border-secondary-subtle shadow-sm text-reset text-decoration-none h-100 w-100"
     :to="{ name: 'CourseDetail', params: { course_id: course.id }, hash: '#intro' }"
   >
     <div class="ratio ratio-16x9 bg-body-tertiary rounded-top overflow-hidden">

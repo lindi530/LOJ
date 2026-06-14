@@ -17,4 +17,5 @@ type CourseListRespItem struct {
 	IsFree       bool    `json:"isFree"`
 	LessonCount  int     `json:"lessonCount"`
 	StudentCount int     `json:"studentCount"`
+	CreatedBy    *int64  `json:"createdBy"`
 }

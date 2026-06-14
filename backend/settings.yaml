@@ -36,6 +36,9 @@ upload:
     image:
         path: "upload/images"
         size: 2
+    video:
+        path: "upload/video"
+        chunk_size: 5
 jwt:
     access_duration: 15
     refresh_duration: 24

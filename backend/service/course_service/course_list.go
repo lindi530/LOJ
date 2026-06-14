@@ -29,6 +29,7 @@ func CourseList(_ *course_model.CourseListReq) (resp response.Response) {
 			IsFree:       course.IsFree == 1,
 			LessonCount:  course.LessonCount,
 			StudentCount: course.StudentCount,
+			CreatedBy:    course.CreatedBy,
 		})
 	}
 

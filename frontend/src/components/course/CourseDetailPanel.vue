@@ -59,7 +59,7 @@
               </div>
               <div class="col">
                 <div class="border rounded-3 p-3 bg-body-tertiary">
-                  <div class="fw-bold">{{ course.chapters?.length || 0 }}</div>
+                  <div class="fw-bold">{{ course.chapterCount || 0 }}</div>
                   <div class="small text-secondary">章节</div>
                 </div>
               </div>
@@ -107,7 +107,7 @@
         <CourseContent
           v-else
           :course-id="course.id"
-          :chapters="course.chapters || []"
+          :can-create-chapter="isCourseCreator"
         />
       </div>
     </div>
@@ -116,6 +116,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useStore } from 'vuex'
 import CourseContent from './CourseContent.vue'
 import CourseIntro from './CourseIntro.vue'
 
@@ -129,6 +130,21 @@ const props = defineProps({
     default: 'intro'
   }
 })
+
+const store = useStore()
+const currentUserId = computed(() => store.getters['user/userId'])
+const courseCreatorId = computed(() => (
+  props.course.createdBy ??
+  props.course.created_by ??
+  props.course.creatorId ??
+  props.course.creator_id ??
+  ''
+))
+const isCourseCreator = computed(() => (
+  Boolean(currentUserId.value) &&
+  Boolean(courseCreatorId.value) &&
+  String(currentUserId.value) === String(courseCreatorId.value)
+))
 
 const priceText = computed(() => {
   if (props.course.isFree) {

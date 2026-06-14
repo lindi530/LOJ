@@ -33,9 +33,8 @@ CREATE TABLE IF NOT EXISTS course_chapters (
     sort INT NOT NULL DEFAULT 0 COMMENT '排序',
 
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 
-    INDEX idx_course_sort (course_id, sort)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程章节表';
 
 
@@ -43,81 +42,76 @@ CREATE TABLE IF NOT EXISTS course_chapters (
 CREATE TABLE IF NOT EXISTS video_assets (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '视频资源ID',
 
-    title VARCHAR(128) COMMENT '视频标题',
     url VARCHAR(1024) NOT NULL COMMENT '视频播放地址',
-
     duration INT NOT NULL DEFAULT 0 COMMENT '视频时长，单位秒',
-    size_bytes BIGINT COMMENT '视频大小，单位字节',
+    size_bytes BIGINT COMMENT '视频大小，单位字节'
 
-    created_by BIGINT COMMENT '上传人ID',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-
-    INDEX idx_created_by (created_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频资源表';
 
 
--- 4. 课程课时表
-CREATE TABLE IF NOT EXISTS course_lessons (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '课时ID',
-
-    course_id BIGINT NOT NULL COMMENT '课程ID',
-    chapter_id BIGINT NOT NULL COMMENT '章节ID',
-    video_asset_id BIGINT COMMENT '视频资源ID',
-
-    title VARCHAR(128) NOT NULL COMMENT '课时标题',
-    duration INT NOT NULL DEFAULT 0 COMMENT '视频时长，单位秒',
-
-    is_free_preview TINYINT NOT NULL DEFAULT 0 COMMENT '是否试看：0否 1是',
-
-    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
-    status TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0草稿 1上架 2下架',
-
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-
-    INDEX idx_course_chapter_sort (course_id, chapter_id, sort),
-    INDEX idx_video_asset_id (video_asset_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程课时表';
+-- -- 4. 课程课时表
+-- CREATE TABLE IF NOT EXISTS course_lessons (
+--     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '课时ID',
+--
+--     course_id BIGINT NOT NULL COMMENT '课程ID',
+--     chapter_id BIGINT NOT NULL COMMENT '章节ID',
+--     video_asset_id BIGINT COMMENT '视频资源ID',
+--
+--     title VARCHAR(128) NOT NULL COMMENT '课时标题',
+--     duration INT NOT NULL DEFAULT 0 COMMENT '视频时长，单位秒',
+--
+--     is_free_preview TINYINT NOT NULL DEFAULT 0 COMMENT '是否试看：0否 1是',
+--
+--     sort INT NOT NULL DEFAULT 0 COMMENT '排序',
+--     status TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0草稿 1上架 2下架',
+--
+--     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+--     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+--
+--     INDEX idx_course_chapter_sort (course_id, chapter_id, sort),
+--     INDEX idx_video_asset_id (video_asset_id)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课程课时表';
 
 
 -- 5. 课时题目关联表
-CREATE TABLE IF NOT EXISTS lesson_problems (
+CREATE TABLE IF NOT EXISTS chapter_problems (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关联ID',
 
     course_id BIGINT NOT NULL COMMENT '课程ID',
-    lesson_id BIGINT NOT NULL COMMENT '课时ID',
+    chapter_id BIGINT NOT NULL COMMENT '章节ID',
     problem_id BIGINT NOT NULL COMMENT 'OJ题目ID，对应 problem.id',
-
-    problem_type TINYINT NOT NULL DEFAULT 1 COMMENT '题目类型：1例题 2课后题 3作业题',
-    sort INT NOT NULL DEFAULT 0 COMMENT '排序',
-
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-
-    UNIQUE KEY uk_lesson_problem (lesson_id, problem_id),
-    INDEX idx_course_lesson (course_id, lesson_id),
-    INDEX idx_problem_id (problem_id)
+    sort INT NOT NULL DEFAULT 0 COMMENT '排序'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时题目关联表';
 
+-- 5. 视频关联表
+CREATE TABLE IF NOT EXISTS chapter_videos (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关联ID',
 
--- 6. 课时学习进度表
-CREATE TABLE IF NOT EXISTS lesson_progress (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '学习进度ID',
-
-    user_id BIGINT NOT NULL COMMENT '用户ID，对应 user.id',
     course_id BIGINT NOT NULL COMMENT '课程ID',
-    lesson_id BIGINT NOT NULL COMMENT '课时ID',
+    chapter_id BIGINT NOT NULL COMMENT '章节ID',
+    video_id BIGINT NOT NULL COMMENT '视频ID，对应 video_assets.id'
 
-    last_position INT NOT NULL DEFAULT 0 COMMENT '上次观看到的位置，单位秒',
-    watched_seconds INT NOT NULL DEFAULT 0 COMMENT '已观看秒数',
-    progress_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT '学习进度百分比',
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时视频关联表';
 
-    is_finished TINYINT NOT NULL DEFAULT 0 COMMENT '是否完成：0否 1是',
-    finished_at DATETIME COMMENT '完成时间',
-
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-
-    UNIQUE KEY uk_user_lesson (user_id, lesson_id),
-    INDEX idx_user_course (user_id, course_id),
-    INDEX idx_course_lesson (course_id, lesson_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时学习进度表';
+-- -- 6. 课时学习进度表
+-- CREATE TABLE IF NOT EXISTS lesson_progress (
+--     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '学习进度ID',
+--
+--     user_id BIGINT NOT NULL COMMENT '用户ID，对应 user.id',
+--     course_id BIGINT NOT NULL COMMENT '课程ID',
+--     lesson_id BIGINT NOT NULL COMMENT '课时ID',
+--
+--     last_position INT NOT NULL DEFAULT 0 COMMENT '上次观看到的位置，单位秒',
+--     watched_seconds INT NOT NULL DEFAULT 0 COMMENT '已观看秒数',
+--     progress_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT '学习进度百分比',
+--
+--     is_finished TINYINT NOT NULL DEFAULT 0 COMMENT '是否完成：0否 1是',
+--     finished_at DATETIME COMMENT '完成时间',
+--
+--     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+--     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+--
+--     UNIQUE KEY uk_user_lesson (user_id, lesson_id),
+--     INDEX idx_user_course (user_id, course_id),
+--     INDEX idx_course_lesson (course_id, lesson_id)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时学习进度表';

@@ -187,7 +187,9 @@ const normalizeCourse = (course) => ({
   price: Number(course.price || 0),
   isFree: Boolean(course.isFree),
   lessonCount: Number(course.lessonCount || 0),
-  studentCount: Number(course.studentCount || 0)
+  studentCount: Number(course.studentCount || 0),
+  chapterCount: Number(course.chapterCount ?? course.chapter_count ?? 0),
+  createdBy: course.createdBy ?? course.created_by ?? course.creatorId ?? course.creator_id ?? ''
 })
 
 const loadCourses = async () => {

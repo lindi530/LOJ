@@ -19,6 +19,8 @@ import CompetitionProblem from '@/views/CompetitionProblemView.vue'
 import Saber from '@/views/SaberView.vue'
 import Course from '@/views/CourseView.vue'
 import CoursePublish from '@/views/CoursePublishView.vue'
+import CourseChapterCreate from '@/views/CourseChapterCreateView.vue'
+import CourseVideoPage from '@/components/course/CourseVideoPage.vue'
 import store from '@/store'
 
 const routes = [
@@ -98,6 +100,17 @@ const routes = [
     path: '/course/publish',
     name: 'CoursePublish',
     component: CoursePublish
+  },
+  {
+    path: '/course/:course_id/chapter/create',
+    name: 'CourseChapterCreate',
+    component: CourseChapterCreate,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/course/:course_id/chapter/:chapter_id/:video_id',
+    name: 'CourseChapterVideo',
+    component: CourseVideoPage
   },
   {
     path: '/course/:course_id',

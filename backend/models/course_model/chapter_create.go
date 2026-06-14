@@ -1,17 +1,22 @@
 package course_model
 
 type ChapterCreateReq struct {
-	CourseID    int64     `json:"course_id"`
-	Title       string    `json:"title"`
-	Description *string   `json:"description"`
-	Sort        int       `json:"sort"`
-	Problems    []problem `json:"problems"`
-	VideoURL    string    `json:"video_url"`
+	CourseID    int64                  `json:"course_id" binding:"required"`
+	Title       string                 `json:"title" binding:"required"`
+	Description *string                `json:"description"`
+	Sort        int                    `json:"sort" binding:"required"`
+	Problems    []ChapterCreateProblem `json:"problems"`
+	Video       ChapterCreateVideo     `json:"video" binding:"required"`
 }
 
-type problem struct {
-	ID   int64 `json:"problem_id"`
+type ChapterCreateProblem struct {
+	ID   int64 `json:"id"`
 	Sort int   `json:"sort"`
+}
+
+type ChapterCreateVideo struct {
+	URL string `json:"url"`
+	ID  int64  `json:"id"`
 }
 
 type ChapterCreateResp struct {
@@ -20,15 +25,18 @@ type ChapterCreateResp struct {
 /*
 {
   "course_id": 1,
-  "title": "章节标题",
+  "title": "chapter title",
   "description": null,
-  "sort": 1, // 前端上传题目的顺序
+  "sort": 1,
   "problems": [
     {
-      "problem_id": 101,
+      "id": 101,
       "sort": 1
     }
   ],
-  "video_url": "https://example.com/video.mp4"
+  "video": {
+    "url": "https://example.com/video.mp4",
+    "id": 10
+  }
 }
 */

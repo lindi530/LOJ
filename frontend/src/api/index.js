@@ -95,14 +95,38 @@ export default {
   getCourseList() {
     return request.get(`/course`)
   },
+  getCourseChapters(course_id) {
+    return request.get(`/course/${course_id}/chapter`)
+  },
+  getCourseChapterDetail(course_id, chapter_id) {
+    return request.get(`/course/${course_id}/chapter/${chapter_id}`)
+  },
+  getCourseChapterVideo(course_id, chapter_id, video_id) {
+    return request.get(`/course/${course_id}/chapter/${chapter_id}/${video_id}`)
+  },
   courseCreate(data) {
     return request.post(`/course/create`, data)
   },
-  submitCode(problemID, data) { 
-    return request.post(`/problems/${problemID}/submit`, data)
+  createCourseChapter(data) {
+    return request.post(`/course/chapter/create`, data)
   },
-  submitExample(problemID, data) { 
-    return request.post(`/problems/${problemID}/submit/example`, data)
+  createVideoUploadTask() {
+    return request.post(`/upload/video`)
+  },
+  checkVideoChunk(upload_id, data) {
+    return request.get(`/upload/video/${upload_id}`, { params: data })
+  },
+  uploadVideoChunk(upload_id, data, config = {}) {
+    return request.post(`/upload/video/${upload_id}`, data, config)
+  },
+  finishVideoUpload(upload_id, data) {
+    return request.post(`/upload/video/${upload_id}/finish`, data)
+  },
+  submitCode(problem_id, data) { 
+    return request.post(`/problems/${problem_id}/submit`, data)
+  },
+  submitExample(problem_id, data) { 
+    return request.post(`/problems/${problem_id}/submit/example`, data)
   },
   match() {
     return request.post(`/match`)
@@ -137,11 +161,11 @@ export default {
   getCompetitionHistory(userId) {
     return request.get(`/competition/history/${userId}`)
   },
-  getProblemSubmissionList(problemID) {
-    return request.get(`/problems/${problemID}/submissions`)
+  getProblemSubmissionList(problem_id) {
+    return request.get(`/problems/${problem_id}/submissions`)
   },
-  getSubmissionDetail(submissionID) {
-    return request.get(`/problems/submissions/${submissionID}`)
+  getSubmissionDetail(submission_id) {
+    return request.get(`/problems/submissions/${submission_id}`)
   },
   getCompetitionsByEndStatus(hasEnded, page, pageSize) {
     const params = { has_ended: hasEnded }
