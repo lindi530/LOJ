@@ -7,8 +7,9 @@ import (
 
 func CreateEmptyVideoAsset() (*course_model.VideoAsset, error) {
 	videoAsset := &course_model.VideoAsset{
-		URL:      "",
-		Duration: 0,
+		OriginPath: "",
+		Status:     course_model.VideoAssetStatusUploading,
+		Duration:   0,
 	}
 
 	err := global.DB.Table("video_assets").Create(videoAsset).Error

@@ -31,7 +31,7 @@
         <span class="fw-semibold">{{ file ? file.name : '选择视频文件' }}</span>
         <span class="text-secondary small">
           <template v-if="file">
-            {{ formatFileSize(file.size) }} · {{ chunkCount }} 个分块 · 每块 {{ chunkSizeMb }}MB
+            {{ formatFileSize(file.size) }} · {{ chunkCount }} 个分块 · 每块 {{ chunkSizeLabel }}
           </template>
           <template v-else>
             支持常见视频格式，上传完成后才能提交章节。
@@ -74,11 +74,11 @@
       </div>
     </div>
 
-    <div v-if="videoUrl" class="alert alert-success d-flex gap-3 mt-3 mb-0">
+    <div v-if="videoOriginPath" class="alert alert-success d-flex gap-3 mt-3 mb-0">
       <i class="bi bi-check-circle-fill mt-1" aria-hidden="true"></i>
       <div>
         <div class="fw-semibold">视频上传完成</div>
-        <div class="small text-break">{{ videoUrl }}</div>
+        <div class="small text-break">{{ videoOriginPath }}</div>
       </div>
     </div>
 
@@ -97,22 +97,24 @@ import { createMd5 } from '@/utils/md5'
 const emit = defineEmits(['uploaded', 'uploading-change'])
 
 const concurrency = 3
+const bytesPerMb = 1024 * 1024
+const defaultChunkSizeBytes = bytesPerMb
 const inputId = `video-file-${Math.random().toString(36).slice(2, 8)}`
 const fileInputRef = ref(null)
 const file = ref(null)
 const uploadId = ref('')
-const chunkSizeMb = ref(1)
+const chunkSizeBytes = ref(defaultChunkSizeBytes)
 const status = ref('initializing')
 const taskError = ref('')
 const uploadError = ref('')
 const uploadedBytes = ref(0)
 const uploadingBytesTotal = ref(0)
 const hashingPercent = ref(0)
-const videoUrl = ref('')
+const videoOriginPath = ref('')
 const videoId = ref(null)
 
-const chunkSizeBytes = computed(() => Math.max(1, Number(chunkSizeMb.value || 1)) * 1024 * 1024)
 const chunkCount = computed(() => (file.value ? Math.ceil(file.value.size / chunkSizeBytes.value) : 0))
+const chunkSizeLabel = computed(() => formatFileSize(chunkSizeBytes.value))
 const isBusy = computed(() => ['checking', 'uploading', 'hashing', 'merging'].includes(status.value))
 const canStartUpload = computed(() => Boolean(file.value && uploadId.value && !isBusy.value && status.value !== 'success'))
 
@@ -181,12 +183,23 @@ const progressClass = computed(() => {
 
 watch(isBusy, (value) => emit('uploading-change', value), { immediate: true })
 
+function extractResponseData(resp, fallbackMessage) {
+  if (resp?.code !== undefined && resp.code !== 0) {
+    throw new Error(resp.message || fallbackMessage)
+  }
+
+  return resp?.data ?? {}
+}
+
 function extractTaskData(resp) {
-  const data = resp?.data || {}
+  const data = extractResponseData(resp, '上传任务创建失败')
+  const chunkSizeMb = Number(data.chunk_size ?? data.chunkSize ?? 0)
+  const explicitChunkSizeMb = Number(data.chunk_size_mb ?? data.chunkSizeMb ?? 0)
+  const normalizedChunkSizeMb = chunkSizeMb > 0 ? chunkSizeMb : explicitChunkSizeMb
 
   return {
-    uploadId: data.upload_id || data.uploadId || data.id || '',
-    chunkSizeMb: Number(data.chunk_size || data.chunkSize || data.chunk_size_mb || data.chunkSizeMb || 1)
+    uploadId: data.upload_id ?? data.uploadId ?? data.id ?? '',
+    chunkSizeBytes: normalizedChunkSizeMb > 0 ? normalizedChunkSizeMb * bytesPerMb : 0
   }
 }
 
@@ -197,7 +210,9 @@ async function createUploadTask() {
   try {
     const task = extractTaskData(await api.createVideoUploadTask())
     uploadId.value = task.uploadId
-    chunkSizeMb.value = Number.isFinite(task.chunkSizeMb) && task.chunkSizeMb > 0 ? task.chunkSizeMb : 1
+    chunkSizeBytes.value = Number.isFinite(task.chunkSizeBytes) && task.chunkSizeBytes > 0
+      ? task.chunkSizeBytes
+      : defaultChunkSizeBytes
 
     if (!uploadId.value) {
       throw new Error('后端未返回 upload_id')
@@ -214,7 +229,7 @@ function handleFileChange(event) {
   const [selectedFile] = event.target.files || []
 
   file.value = selectedFile || null
-  videoUrl.value = ''
+  videoOriginPath.value = ''
   videoId.value = null
   uploadError.value = ''
   uploadedBytes.value = 0
@@ -229,7 +244,7 @@ function handleFileChange(event) {
 
 function clearFile() {
   file.value = null
-  videoUrl.value = ''
+  videoOriginPath.value = ''
   videoId.value = null
   uploadError.value = ''
   uploadedBytes.value = 0
@@ -262,34 +277,44 @@ async function calculateBlobMd5(blob) {
   return md5.end()
 }
 
-async function checkChunkExists(chunkId, md5) {
+async function getChunkUploadInfo(chunkId, md5) {
   const resp = await api.checkVideoChunk(uploadId.value, {
-    upload_id: uploadId.value,
     md5,
-    chunk_id: String(chunkId)
+    chunk_id: chunkId
   })
 
-  return resp?.data?.exist === true
+  return extractResponseData(resp, '分块上传地址获取失败')
 }
 
-async function uploadChunk(chunkId, chunkBlob) {
-  const formData = new FormData()
+function normalizeUploadHeaders(headers) {
+  return Object.fromEntries(
+    Object.entries(headers || {}).filter(([, value]) => value !== undefined && value !== null)
+  )
+}
 
-  formData.append('chunk', chunkBlob, `${file.value.name}.part${chunkId}`)
-  formData.append('upload_id', uploadId.value)
-  formData.append('chunk_id', String(chunkId))
-  formData.append('filename', file.value.name)
+async function uploadChunk(chunkId, chunkBlob, chunkInfo) {
+  if (!chunkInfo?.upload_url) {
+    throw new Error('后端未返回分块上传地址')
+  }
 
-  await api.uploadVideoChunk(uploadId.value, formData)
+  const response = await fetch(chunkInfo.upload_url, {
+    method: chunkInfo.method || 'PUT',
+    headers: normalizeUploadHeaders(chunkInfo.headers),
+    body: chunkBlob
+  })
+
+  if (!response.ok) {
+    throw new Error(`分块 ${chunkId + 1} 上传失败 (${response.status})`)
+  }
 }
 
 async function processChunk(chunkId) {
   const chunkBlob = getChunkBlob(chunkId)
   const md5 = await calculateBlobMd5(chunkBlob)
-  const exists = await checkChunkExists(chunkId, md5)
+  const chunkInfo = await getChunkUploadInfo(chunkId, md5)
 
-  if (!exists) {
-    await uploadChunk(chunkId, chunkBlob)
+  if (chunkInfo.exist !== true) {
+    await uploadChunk(chunkId, chunkBlob, chunkInfo)
   }
 
   uploadedBytes.value += chunkBlob.size
@@ -336,30 +361,27 @@ async function calculateFileMd5() {
 function extractVideoAsset(data) {
   if (typeof data === 'string') {
     return {
-      url: data,
+      origin_path: data,
       id: null
     }
   }
 
   return {
-    url: data?.video_url || data?.videoUrl || data?.url || data?.path || '',
+    origin_path: data?.origin_path || '',
     id: data?.id ?? data?.video_id ?? data?.videoId ?? null
   }
 }
 
 async function finishUpload(md5) {
   const resp = await api.finishVideoUpload(uploadId.value, {
-    upload_id: uploadId.value,
     md5,
-    file_md5: md5,
-    filename: file.value.name,
     file_name: file.value.name,
     chunk_count: chunkCount.value
   })
-  const video = extractVideoAsset(resp?.data ?? resp)
+  const video = extractVideoAsset(extractResponseData(resp, '视频合并失败'))
 
-  if (!video.url) {
-    throw new Error('后端未返回视频地址')
+  if (!video.origin_path) {
+    throw new Error('后端未返回视频路径')
   }
 
   if (video.id === null || video.id === undefined || video.id === '') {
@@ -375,7 +397,7 @@ async function startUpload() {
   }
 
   uploadError.value = ''
-  videoUrl.value = ''
+  videoOriginPath.value = ''
   videoId.value = null
   emit('uploaded', '')
 
@@ -397,11 +419,11 @@ async function startUpload() {
 
     status.value = 'merging'
     const video = await finishUpload(md5)
-    videoUrl.value = video.url
+    videoOriginPath.value = video.origin_path
     videoId.value = video.id
     status.value = 'success'
     emit('uploaded', {
-      url: videoUrl.value,
+      origin_path: videoOriginPath.value,
       id: videoId.value
     })
   } catch (error) {

@@ -74,3 +74,14 @@ rabbitmq:
     url: "amqp://guest:guest@localhost:5672/"
 sql_file:
     path: "database/sql"
+minio:
+    address: "minio:9000"
+    public_address: "localhost:9000"
+    region: "us-east-1"
+    access_key_id: "minioadmin"
+    secret_access_key: "minioadmin"
+    bucket:
+        video: "loj"
+        video_path: "video/raw"
+        video_play_path: "video/hls"
+        video_cover_path: "video/cover"

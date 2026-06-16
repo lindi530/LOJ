@@ -29,11 +29,33 @@ type CourseChapter struct {
 }
 
 type VideoAsset struct {
-	ID        int64  `json:"id"`
-	URL       string `json:"url"`
-	Duration  int    `json:"duration"`
-	SizeBytes *int64 `json:"sizeBytes"`
+	ID         int64  `json:"id"`
+	OriginPath string `json:"origin_path"`
+	PlayPath   string `json:"play_path"`
+	CoverPath  string `json:"cover_path"`
+	Status     int8   `json:"status"`
+	Duration   int    `json:"duration"`
+	SizeBytes  *int64 `json:"sizeBytes"`
 }
+
+type VideoProfile struct {
+	ID           int64     `json:"id"`
+	VideoID      int64     `json:"video_id"`   // 对应 原视频VideoAsset 中的ID
+	Resolution   string    `json:"resolution"` // 480P, 720P, 1080P
+	Width        int       `json:"width"`
+	Height       int       `json:"height"`
+	Bitrate      int       `json:"bitrate"`       // 码率(kbps)
+	PlaylistPath string    `json:"playlist_path"` // index.m3u8
+	FileSize     int64     `json:"file_size"`     // 字节
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+const (
+	VideoAssetStatusUploading int8 = iota
+	VideoAssetStatusTranscoding
+	VideoAssetStatusPlayable
+	VideoAssetStatusTranscodeFailed
+)
 
 //type CourseLesson struct {
 //	ID            int64     `json:"id"`

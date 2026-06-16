@@ -2,7 +2,7 @@ param(
     [ValidateSet("up", "rebuild", "logs", "ps", "down")]
     [string]$Action = "up",
 
-    [ValidateSet("backend", "frontend", "nginx")]
+    [ValidateSet("backend", "frontend", "nginx", "minio")]
     [string]$Service
 )
 

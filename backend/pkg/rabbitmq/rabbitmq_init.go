@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	"GO1/global"
+	"GO1/pkg/constants"
 	"github.com/streadway/amqp"
 	"log"
 	"os"
@@ -28,7 +29,7 @@ func InitRabbitMQ() {
 		log.Fatalf("RabbitMQ channel error: %v", err)
 	}
 
-	for _, queueName := range []string{"match_queue", "ac_calendar", "competition_submit_queue"} {
+	for _, queueName := range []string{"match_queue", "ac_calendar", constants.CompetitionSubmitQueue, constants.VideoTranscodeQueue} {
 		_, err = MQChannel.QueueDeclare(
 			queueName,
 			true,

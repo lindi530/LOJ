@@ -7,6 +7,7 @@ import (
 	"GO1/pkg/gorm"
 	"GO1/pkg/jwt"
 	"GO1/pkg/logger"
+	"GO1/pkg/minio"
 	"GO1/pkg/rabbitmq"
 	"GO1/pkg/redis"
 	"GO1/pkg/snowflake"
@@ -16,6 +17,7 @@ import (
 	"GO1/service/competition_service"
 	"GO1/service/match_service"
 	"GO1/service/mq_service/ac_calendar_mq"
+	"GO1/service/upload_service/video"
 	"GO1/service/ws_service"
 	"fmt"
 
@@ -45,6 +47,7 @@ func initDependencies() {
 	validator.InitValidator()
 	translator.InitTrans("zh")
 	redis.InitRedisClient()
+	minio.InitMinio()
 	jwt.InitJwt()
 	rabbitmq.InitRabbitMQ()
 }
@@ -69,6 +72,7 @@ func syncInitialData() {
 func startServer() {
 	match_service.StartMatchConsumer()
 	competition_service.StartCompetitionSubmitConsumer()
+	video.StartVideoTranscodeConsumer()
 	startHTTPServer() // 必须在最后
 }
 

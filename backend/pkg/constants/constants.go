@@ -65,6 +65,11 @@ const (
 )
 
 const (
+	VideoTranscodeQueue           = "video_transcode_queue"
+	VideoTranscodeContentTypeJSON = "application/json"
+)
+
+const (
 	JudgeStatusPending             = "Pending"
 	JudgeStatusCompiling           = "Compiling"
 	JudgeStatusRunning             = "Running"

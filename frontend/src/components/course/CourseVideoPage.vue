@@ -53,13 +53,13 @@
         </div>
       </section>
 
-      <section v-else-if="!video.url" class="row justify-content-center">
+      <section v-else-if="!video.origin_path" class="row justify-content-center">
         <div class="col-lg-7">
           <div class="card border-0 shadow-sm text-center">
             <div class="card-body p-4 p-lg-5">
               <i class="bi bi-camera-video-off display-5 text-secondary" aria-hidden="true"></i>
               <h2 class="h4 mt-3 mb-2">本章节暂无视频</h2>
-              <p class="text-secondary mb-4">后端没有返回可播放的视频地址。</p>
+              <p class="text-secondary mb-4">后端没有返回可播放的视频路径。</p>
               <RouterLink class="btn btn-primary" :to="{ name: 'CourseDetail', params: { course_id: courseId }, hash: '#content' }">
                 返回课程内容
               </RouterLink>
@@ -94,7 +94,8 @@ function createEmptyVideo() {
     id: '',
     title: '',
     description: '',
-    url: '',
+    origin_path: '',
+    source: '',
     poster: '',
     duration: 0,
     sizeBytes: 0
@@ -113,26 +114,26 @@ function getApiOrigin() {
   return getAppOrigin()
 }
 
-function normalizeVideoUrl(url) {
-  if (!url) {
+function normalizeOriginPath(originPath) {
+  if (!originPath) {
     return ''
   }
 
-  const normalizedUrl = String(url).trim().replace(/\\/g, '/')
+  const normalizedOriginPath = String(originPath).trim().replace(/\\/g, '/')
 
   if (
-    /^(https?:)?\/\//.test(normalizedUrl) ||
-    normalizedUrl.startsWith('data:') ||
-    normalizedUrl.startsWith('blob:')
+    /^(https?:)?\/\//.test(normalizedOriginPath) ||
+    normalizedOriginPath.startsWith('data:') ||
+    normalizedOriginPath.startsWith('blob:')
   ) {
-    return normalizedUrl
+    return normalizedOriginPath
   }
 
-  if (normalizedUrl.startsWith('/')) {
-    return new URL(normalizedUrl, getApiOrigin()).href
+  if (normalizedOriginPath.startsWith('/')) {
+    return new URL(normalizedOriginPath, getApiOrigin()).href
   }
 
-  return new URL(`/${normalizedUrl}`, getApiOrigin()).href
+  return new URL(`/${normalizedOriginPath}`, getApiOrigin()).href
 }
 
 function getResponseData(resp) {
@@ -151,7 +152,7 @@ function getResponseData(resp) {
 
 function getVideoPayload(data) {
   if (typeof data === 'string') {
-    return { url: data }
+    return { origin_path: data }
   }
 
   return data?.videoAsset || data?.video_asset || data?.video || data || {}
@@ -159,13 +160,15 @@ function getVideoPayload(data) {
 
 function normalizeVideo(data) {
   const payload = getVideoPayload(data)
+  const originPath = payload.origin_path || ''
 
   return {
     id: payload.id ?? payload.video_id ?? payload.videoId ?? '',
     title: payload.title || payload.name || `第 ${chapterId.value} 章视频`,
     description: payload.description || '',
-    url: normalizeVideoUrl(payload.url || payload.video_url || payload.videoUrl || payload.src || payload.path || ''),
-    poster: normalizeVideoUrl(payload.poster || payload.coverUrl || payload.cover_url || ''),
+    origin_path: originPath,
+    source: normalizeOriginPath(originPath),
+    poster: normalizeOriginPath(payload.poster || payload.coverUrl || payload.cover_url || ''),
     duration: Number(payload.duration ?? payload.durationSeconds ?? payload.duration_seconds ?? 0),
     sizeBytes: Number(payload.sizeBytes ?? payload.size_bytes ?? payload.size ?? 0)
   }

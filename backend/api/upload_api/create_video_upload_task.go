@@ -2,14 +2,14 @@ package upload_api
 
 import (
 	"GO1/middlewares/response"
-	"GO1/service/upload_service"
+	"GO1/service/upload_service/video"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (UploadAPI) CreateVideoUploadTask(c *gin.Context) {
 
-	resp := upload_service.CreateVideoUploadTask()
+	resp := video.CreateVideoUploadTask(c.Request.Context())
 	if resp.Code == 1 {
 		response.FailWithMessage(resp.Message, c)
 		return

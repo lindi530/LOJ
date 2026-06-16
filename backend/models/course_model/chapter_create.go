@@ -15,8 +15,8 @@ type ChapterCreateProblem struct {
 }
 
 type ChapterCreateVideo struct {
-	URL string `json:"url"`
-	ID  int64  `json:"id"`
+	OriginPath string `json:"origin_path"`
+	ID         int64  `json:"id"`
 }
 
 type ChapterCreateResp struct {
@@ -35,7 +35,7 @@ type ChapterCreateResp struct {
     }
   ],
   "video": {
-    "url": "https://example.com/video.mp4",
+    "origin_path": "video/10/example.mp4",
     "id": 10
   }
 }

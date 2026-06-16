@@ -18,4 +18,5 @@ type Config struct {
 	Settings    settings.Settings `mapstructure:"settings"`
 	Language    language.Language `mapstructure:"language"`
 	SqlFile     SqlFile           `mapstructure:"sql_file"`
+	Minio       Minio             `mapstructure:"minio"`
 }

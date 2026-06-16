@@ -111,14 +111,10 @@
         </div>
 
         <div class="col-lg-5">
-          <section class="card border-0 shadow-sm mb-4">
-            <div class="card-body p-4">
-              <VideoChunkUpload
-                @uploaded="handleVideoUploaded"
-                @uploading-change="videoUploading = $event"
-              />
-            </div>
-          </section>
+          <CourseChapterVideoUpload
+            v-model="videoAsset"
+            v-model:uploading="videoUploading"
+          />
 
           <section class="card border-0 shadow-sm">
             <div class="card-body p-4">
@@ -137,8 +133,8 @@
                   <span class="fw-semibold">{{ selectedProblems.length }} 题</span>
                 </div>
                 <div class="list-group-item px-0">
-                  <div class="text-secondary mb-1">视频地址</div>
-                  <div class="small text-break">{{ videoUrl || '等待视频上传完成' }}</div>
+                  <div class="text-secondary mb-1">视频路径</div>
+                  <div class="small text-break">{{ videoOriginPath || '等待视频上传完成' }}</div>
                 </div>
               </div>
 
@@ -173,7 +169,7 @@ import { computed, reactive, ref } from 'vue'
 import { useDialog } from 'naive-ui'
 import { useRoute, useRouter } from 'vue-router'
 import ProblemSelector from '@/components/ProblemUpload/ProblemSelector.vue'
-import VideoChunkUpload from '@/components/upload/VideoChunkUpload.vue'
+import CourseChapterVideoUpload from '@/components/upload/CourseChapterVideoUpload.vue'
 import api from '@/api'
 
 const route = useRoute()
@@ -186,7 +182,7 @@ const submitError = ref('')
 const selectedProblems = ref([])
 const videoUploading = ref(false)
 const videoAsset = ref({
-  url: '',
+  origin_path: '',
   id: null
 })
 
@@ -200,30 +196,12 @@ const courseId = computed(() => Number(route.params.course_id))
 const normalizedSort = computed(() => Number(form.sort || 1))
 const sortValid = computed(() => Number.isInteger(normalizedSort.value) && normalizedSort.value >= 1)
 const submitDisabled = computed(() => submitting.value || videoUploading.value)
-const videoUrl = computed(() => videoAsset.value.url)
+const videoOriginPath = computed(() => videoAsset.value.origin_path)
 const hasVideoAsset = computed(() => {
   const id = videoAsset.value.id
 
-  return Boolean(videoAsset.value.url && id !== null && id !== undefined && id !== '')
+  return Boolean(videoAsset.value.origin_path && id !== null && id !== undefined && id !== '')
 })
-
-function normalizeVideoAsset(video) {
-  if (typeof video === 'string') {
-    return {
-      url: video,
-      id: null
-    }
-  }
-
-  return {
-    url: video?.url || video?.video_url || video?.videoUrl || '',
-    id: video?.id ?? video?.video_id ?? video?.videoId ?? null
-  }
-}
-
-function handleVideoUploaded(video) {
-  videoAsset.value = normalizeVideoAsset(video)
-}
 
 function buildPayload() {
   const description = form.description.trim()
@@ -238,7 +216,7 @@ function buildPayload() {
       sort: index + 1
     })),
     video: {
-      url: videoAsset.value.url,
+      origin_path: videoAsset.value.origin_path,
       id: videoAsset.value.id
     }
   }

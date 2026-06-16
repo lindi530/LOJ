@@ -1,31 +1,25 @@
 package upload_model
 
-import "mime/multipart"
-
 type CreateVideoUploadTaskReq struct{}
 
 type CreateVideoUploadTaskResp struct {
-	UploadID  int64 `json:"upload_id"`
-	ChunkSize int   `json:"chunk_size"`
+	UploadID      int64  `json:"upload_id"`
+	MinioUploadID string `json:"minio_upload_id"`
+	ChunkSize     int    `json:"chunk_size"`
 }
-type CheckChunkMD5Req struct {
+
+type CreateChunkUploadURLReq struct {
 	UploadID int64  `json:"upload_id"`
 	ChunkID  int    `json:"chunk_id"`
 	MD5      string `json:"md5"`
 }
 
-type CheckChunkMD5Resp struct {
-	Exist bool `json:"exist"`
-}
-
-type ReceiveChunkReq struct {
-	UploadID int64                 `json:"upload_id" form:"upload_id"`
-	ChunkID  int                   `json:"chunk_id" form:"chunk_id"`
-	Filename string                `json:"filename" form:"filename"`
-	Chunk    *multipart.FileHeader `json:"-" form:"chunk"`
-}
-
-type ReceiveChunkResp struct {
+type CreateChunkUploadURLResp struct {
+	Exist      bool              `json:"exist"`
+	Method     string            `json:"method,omitempty"`
+	UploadURL  string            `json:"upload_url,omitempty"`
+	Headers    map[string]string `json:"headers,omitempty"`
+	PartNumber int               `json:"part_number,omitempty"`
 }
 
 type VideoFinishReq struct {
@@ -36,6 +30,6 @@ type VideoFinishReq struct {
 }
 
 type VideoFinishResp struct {
-	URL string `json:"url"`
-	ID  int64  `json:"id"`
+	OriginPath string `json:"origin_path"`
+	ID         int64  `json:"id"`
 }

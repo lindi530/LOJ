@@ -4,7 +4,7 @@ import (
 	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/upload_model"
-	"GO1/service/upload_service"
+	"GO1/service/upload_service/video"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,7 +35,7 @@ func (UploadAPI) VideoFinish(c *gin.Context) {
 	}
 	req.UploadID = uriReq.UploadID
 
-	resp := upload_service.VideoFinish(c, &req)
+	resp := video.VideoFinish(c, &req)
 	if resp.Code == 1 {
 		response.FailWithMessage(resp.Message, c)
 		return

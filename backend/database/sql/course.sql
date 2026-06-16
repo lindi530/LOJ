@@ -41,8 +41,15 @@ CREATE TABLE IF NOT EXISTS course_chapters (
 -- 3. 视频资源表
 CREATE TABLE IF NOT EXISTS video_assets (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '视频资源ID',
-
-    url VARCHAR(1024) NOT NULL COMMENT '视频播放地址',
+    origin_path VARCHAR(500) NOT NULL COMMENT '原始视频路径',
+    play_path VARCHAR(500) DEFAULT NULL COMMENT 'master.m3u8路径',
+    cover_path VARCHAR(500) DEFAULT NULL COMMENT '封面路径',
+    status TINYINT NOT NULL DEFAULT 0 COMMENT '
+        0=上传中,
+        1=转码中,
+        2=可播放,
+        3=转码失败
+    ',
     duration INT NOT NULL DEFAULT 0 COMMENT '视频时长，单位秒',
     size_bytes BIGINT COMMENT '视频大小，单位字节'
 
@@ -115,3 +122,23 @@ CREATE TABLE IF NOT EXISTS chapter_videos (
 --     INDEX idx_user_course (user_id, course_id),
 --     INDEX idx_course_lesson (course_id, lesson_id)
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='课时学习进度表';
+
+CREATE TABLE IF NOT EXISTS video_profile (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    video_id BIGINT NOT NULL,
+    resolution VARCHAR(20) NOT NULL COMMENT '
+    480P
+    720P
+    1080P
+    ',
+    width INT NOT NULL,
+    height INT NOT NULL,
+    bitrate INT NOT NULL COMMENT '码率(kbps)',
+    playlist_path VARCHAR(500) NOT NULL COMMENT 'index.m3u8',
+    file_size BIGINT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_video_resolution (
+        video_id,
+        resolution
+    )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频资源存放表';

@@ -114,10 +114,7 @@ export default {
     return request.post(`/upload/video`)
   },
   checkVideoChunk(upload_id, data) {
-    return request.get(`/upload/video/${upload_id}`, { params: data })
-  },
-  uploadVideoChunk(upload_id, data, config = {}) {
-    return request.post(`/upload/video/${upload_id}`, data, config)
+    return request.post(`/upload/video/${upload_id}/chunk_url`, data)
   },
   finishVideoUpload(upload_id, data) {
     return request.post(`/upload/video/${upload_id}/finish`, data)

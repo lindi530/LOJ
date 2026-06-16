@@ -2,9 +2,9 @@
   <section class="card border-0 shadow-sm overflow-hidden">
     <div class="ratio ratio-16x9 bg-dark">
       <video
-        v-if="video.url"
+        v-if="video.source"
         class="course-video-media"
-        :src="video.url"
+        :src="video.source"
         :poster="video.poster || ''"
         controls
         playsinline
@@ -41,9 +41,9 @@
         </div>
       </div>
 
-      <div v-if="video.url" class="border rounded-3 bg-body-tertiary p-3 mt-3">
-        <div class="small text-secondary mb-1">播放地址</div>
-        <div class="text-break small">{{ video.url }}</div>
+      <div v-if="video.origin_path" class="border rounded-3 bg-body-tertiary p-3 mt-3">
+        <div class="small text-secondary mb-1">播放路径</div>
+        <div class="text-break small">{{ video.origin_path }}</div>
       </div>
     </div>
   </section>

@@ -36,6 +36,7 @@ services:
       MYSQL_DSN: root:lindi530@tcp(mysql:3306)/LOJ_db?charset=utf8mb4&parseTime=True&loc=Local
       REDIS_ADDR: redis:6379
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      MINIO_PUBLIC_ADDRESS: localhost:9000
       TEMP_DIR: /mnt/docker-desktop-disk/loj-oj
       TZ: Asia/Shanghai
     depends_on:
@@ -44,6 +45,8 @@ services:
       redis:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -125,9 +128,36 @@ services:
       start_period: 20s
     restart: unless-stopped
 
+  minio:
+    build:
+      context: ./minio
+      dockerfile: Dockerfile
+    container_name: loj-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_API_CORS_ALLOW_ORIGIN: http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173,http://127.0.0.1:5173
+      TZ: Asia/Shanghai
+    volumes:
+      - minio_data:/data
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    expose:
+      - "9000"
+      - "9001"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
 volumes:
   mysql_data:
   redis_data:
   rabbitmq_data:
+  minio_data:
   backend_logs:
   backend_uploads:

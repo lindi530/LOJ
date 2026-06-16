@@ -41,7 +41,7 @@ func ChapterCreate(c *gin.Context, req *course_model.ChapterCreateReq) (resp res
 		resp.Message = "章节题目不能为空"
 		return
 	}
-	if req.Video.ID <= 0 || strings.TrimSpace(req.Video.URL) == "" {
+	if req.Video.ID <= 0 || strings.TrimSpace(req.Video.OriginPath) == "" {
 		resp.Code = 1
 		resp.Message = "视频信息错误"
 		return
