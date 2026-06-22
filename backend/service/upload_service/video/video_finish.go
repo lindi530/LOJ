@@ -38,7 +38,7 @@ func VideoFinish(c *gin.Context, req *upload_model.VideoFinishReq) (resp respons
 		resp.Message = "视频文件名错误"
 		return
 	}
-	if req.ChunkCount <= 0 || req.ChunkCount > maxMinioPartCount {
+	if req.ChunkCount <= 0 || req.ChunkCount > global.Config.Upload.Video.MaxPartCount {
 		resp.Code = 1
 		resp.Message = "视频分块数量错误"
 		return

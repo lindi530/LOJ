@@ -18,13 +18,8 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-const (
-	maxMinioPartCount       = 10000
-	chunkUploadURLExpiresIn = 15 * time.Minute
-)
-
 func CreateChunkUploadURL(c *gin.Context, req *upload_model.CreateChunkUploadURLReq) (resp response.Response) {
-	if req.ChunkID < 0 || req.ChunkID >= maxMinioPartCount {
+	if req.ChunkID < 0 || req.ChunkID >= global.Config.Upload.Video.MaxPartCount {
 		resp.Code = 1
 		resp.Message = "视频分块数量错误"
 		return
@@ -79,7 +74,7 @@ func CreateChunkUploadURL(c *gin.Context, req *upload_model.CreateChunkUploadURL
 		http.MethodPut,
 		uploadMeta.Bucket,
 		uploadMeta.TempObject,
-		chunkUploadURLExpiresIn,
+		time.Duration(global.Config.Upload.Video.ChunkUploadURLExpiresMinutes)*time.Minute,
 		reqParams,
 		headers,
 	)

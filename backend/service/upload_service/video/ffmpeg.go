@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"GO1/global"
 )
 
 func runFFmpeg(ctx context.Context, args ...string) error {
@@ -12,7 +14,7 @@ func runFFmpeg(ctx context.Context, args ...string) error {
 }
 
 func runFFmpegInDir(ctx context.Context, workDir string, args ...string) error {
-	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
+	cmd := exec.CommandContext(ctx, global.Config.Upload.Video.FFmpegPath, args...)
 	if workDir != "" {
 		cmd.Dir = workDir
 	}

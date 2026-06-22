@@ -37,8 +37,35 @@ upload:
         path: "upload/images"
         size: 2
     video:
-        path: "upload/video"
-        chunk_size: 5
+        path: "upload/video"                       # 视频业务路径
+        chunk_size: 5                              # 返回给前端的建议分片大小
+        max_part_count: 10000                      # MinIO 分片上传最大分片数
+        chunk_upload_url_expires_minutes: 15       # 分片上传预签名 URL 过期时间（分钟）
+        ffmpeg_path: "ffmpeg"                      # ffmpeg 可执行文件路径
+        ffprobe_path: "ffprobe"                    # ffprobe 可执行文件路径
+        cover:
+            frame_count: 1                         # 封面截取帧数
+            quality: 2                             # 封面图片质量参数
+        hls:
+            playlist_name: "master.m3u8"           # HLS 主播放列表文件名
+            index_name: "index.m3u8"               # 单个清晰度播放列表文件名
+            segment_seconds: 6                     # HLS 切片时长（秒）
+            audio_bitrate_kbps: 128                # 音频码率（kbps）
+            preset: "veryfast"                     # x264 编码预设
+            profile: "main"                        # H.264 profile
+            variants:                              # HLS 输出清晰度档位
+                - dir: "480"                       # 该档位输出目录
+                  resolution: "480P"               # 该档位展示名称
+                  height: 480                      # 该档位视频高度
+                  bitrate_kbps: 1000               # 该档位视频码率（kbps）
+                - dir: "720"                       # 该档位输出目录
+                  resolution: "720P"               # 该档位展示名称
+                  height: 720                      # 该档位视频高度
+                  bitrate_kbps: 2500               # 该档位视频码率（kbps）
+                - dir: "1080"                      # 该档位输出目录
+                  resolution: "1080P"              # 该档位展示名称
+                  height: 1080                     # 该档位视频高度
+                  bitrate_kbps: 4500               # 该档位视频码率（kbps）
 jwt:
     access_duration: 15
     refresh_duration: 24

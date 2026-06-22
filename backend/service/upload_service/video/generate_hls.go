@@ -8,29 +8,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
+	"GO1/config/upload"
+	"GO1/global"
 	"GO1/models/course_model"
-)
-
-type hlsVariant struct {
-	Dir         string
-	Resolution  string
-	Height      int
-	BitrateKbps int
-}
-
-var hlsVariants = []hlsVariant{
-	{Dir: "480", Resolution: "480P", Height: 480, BitrateKbps: 1000},
-	{Dir: "720", Resolution: "720P", Height: 720, BitrateKbps: 2500},
-	{Dir: "1080", Resolution: "1080P", Height: 1080, BitrateKbps: 4500},
-}
-
-const (
-	hlsPlaylistName    = "master.m3u8"
-	hlsIndexName       = "index.m3u8"
-	hlsSegmentSeconds  = "6"
-	hlsAudioBitrateKbs = 128
 )
 
 func generateHLS(ctx context.Context, inputPath string, outputDir string) (string, []course_model.VideoProfile, error) {
@@ -38,10 +21,11 @@ func generateHLS(ctx context.Context, inputPath string, outputDir string) (strin
 		return "", nil, err
 	}
 
-	profiles := make([]course_model.VideoProfile, 0, len(hlsVariants))
-	for _, variant := range hlsVariants {
+	hlsConfig := global.Config.Upload.Video.HLS
+	profiles := make([]course_model.VideoProfile, 0, len(hlsConfig.Variants))
+	for _, variant := range hlsConfig.Variants {
 		variantDir := filepath.Join(outputDir, variant.Dir)
-		if err := generateHLSVariant(ctx, inputPath, variantDir, variant); err != nil {
+		if err := generateHLSVariant(ctx, inputPath, variantDir, variant, hlsConfig); err != nil {
 			return "", nil, err
 		}
 
@@ -64,25 +48,26 @@ func generateHLS(ctx context.Context, inputPath string, outputDir string) (strin
 			Width:        width,
 			Height:       height,
 			Bitrate:      variant.BitrateKbps,
-			PlaylistPath: strings.ReplaceAll(filepath.ToSlash(filepath.Join(variant.Dir, hlsIndexName)), "\\", "/"),
+			PlaylistPath: strings.ReplaceAll(filepath.ToSlash(filepath.Join(variant.Dir, hlsConfig.IndexName)), "\\", "/"),
 			FileSize:     fileSize,
 		})
 	}
 
-	if err := writeMasterPlaylist(outputDir, profiles); err != nil {
+	if err := writeMasterPlaylist(outputDir, profiles, hlsConfig); err != nil {
 		return "", nil, err
 	}
 
-	return filepath.Join(outputDir, hlsPlaylistName), profiles, nil
+	return filepath.Join(outputDir, hlsConfig.PlaylistName), profiles, nil
 }
 
-func generateHLSVariant(ctx context.Context, inputPath string, outputDir string, variant hlsVariant) error {
+func generateHLSVariant(ctx context.Context, inputPath string, outputDir string, variant upload.HLSVariant, hlsConfig upload.HLS) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return err
 	}
 
 	maxrateKbps := variant.BitrateKbps * 12 / 10
 	bufsizeKbps := variant.BitrateKbps * 2
+	segmentSeconds := strconv.Itoa(hlsConfig.SegmentSeconds)
 
 	return runFFmpegInDir(
 		ctx,
@@ -91,29 +76,29 @@ func generateHLSVariant(ctx context.Context, inputPath string, outputDir string,
 		"-i", inputPath,
 		"-vf", fmt.Sprintf("scale=-2:%d", variant.Height),
 		"-c:v", "libx264",
-		"-preset", "veryfast",
-		"-profile:v", "main",
+		"-preset", hlsConfig.Preset,
+		"-profile:v", hlsConfig.Profile,
 		"-b:v", fmt.Sprintf("%dk", variant.BitrateKbps),
 		"-maxrate", fmt.Sprintf("%dk", maxrateKbps),
 		"-bufsize", fmt.Sprintf("%dk", bufsizeKbps),
-		"-force_key_frames", fmt.Sprintf("expr:gte(t,n_forced*%s)", hlsSegmentSeconds),
+		"-force_key_frames", fmt.Sprintf("expr:gte(t,n_forced*%s)", segmentSeconds),
 		"-c:a", "aac",
-		"-b:a", fmt.Sprintf("%dk", hlsAudioBitrateKbs),
+		"-b:a", fmt.Sprintf("%dk", hlsConfig.AudioBitrateKbps),
 		"-ac", "2",
-		"-hls_time", hlsSegmentSeconds,
+		"-hls_time", segmentSeconds,
 		"-hls_playlist_type", "vod",
 		"-hls_flags", "independent_segments",
 		"-hls_segment_filename", "%03d.ts",
-		hlsIndexName,
+		hlsConfig.IndexName,
 	)
 }
 
-func writeMasterPlaylist(outputDir string, profiles []course_model.VideoProfile) error {
+func writeMasterPlaylist(outputDir string, profiles []course_model.VideoProfile, hlsConfig upload.HLS) error {
 	var builder strings.Builder
 	builder.WriteString("#EXTM3U\n")
 	builder.WriteString("#EXT-X-VERSION:6\n")
 	for _, profile := range profiles {
-		bandwidth := (profile.Bitrate + hlsAudioBitrateKbs) * 1000
+		bandwidth := (profile.Bitrate + hlsConfig.AudioBitrateKbps) * 1000
 		fmt.Fprintf(
 			&builder,
 			"#EXT-X-STREAM-INF:BANDWIDTH=%d,RESOLUTION=%dx%d\n%s\n",
@@ -124,7 +109,7 @@ func writeMasterPlaylist(outputDir string, profiles []course_model.VideoProfile)
 		)
 	}
 
-	return os.WriteFile(filepath.Join(outputDir, hlsPlaylistName), []byte(builder.String()), 0644)
+	return os.WriteFile(filepath.Join(outputDir, hlsConfig.PlaylistName), []byte(builder.String()), 0644)
 }
 
 func firstHLSSegmentPath(outputDir string) (string, error) {
@@ -161,7 +146,7 @@ func directoryFileSize(dir string) (int64, error) {
 func probeVideoDimensions(ctx context.Context, filePath string) (int, int, error) {
 	cmd := exec.CommandContext(
 		ctx,
-		"ffprobe",
+		global.Config.Upload.Video.FFprobePath,
 		"-v", "error",
 		"-select_streams", "v:0",
 		"-show_entries", "stream=width,height",
