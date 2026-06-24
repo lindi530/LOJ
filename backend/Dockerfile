@@ -6,7 +6,7 @@ ENV TZ=Asia/Shanghai
 
 RUN sed -i 's#https://dl-cdn.alpinelinux.org#https://mirrors.ustc.edu.cn#g; s#http://dl-cdn.alpinelinux.org#https://mirrors.ustc.edu.cn#g' /etc/apk/repositories \
     && apk update --no-cache \
-    && apk add --no-cache tzdata ca-certificates git docker-cli ffmpeg \
+    && apk add --no-cache tzdata ca-certificates git docker-cli ffmpeg openssl \
     && go install github.com/air-verse/air@v1.62.0 \
     && rm -rf /var/cache/apk/*
 

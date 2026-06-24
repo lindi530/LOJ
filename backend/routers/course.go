@@ -18,6 +18,7 @@ func CourseRouter(router *gin.RouterGroup) {
 	course.Use(jwt.JWTAuthMiddleware())
 	{
 		course.POST("/create", api.ApiGroups.CourseAPI.CourseCreate)
+		course.GET("/video/:video_id/hls-key", api.ApiGroups.CourseAPI.GetVideoHLSKey)
 	}
 
 	chapter := course.Group("/chapter")

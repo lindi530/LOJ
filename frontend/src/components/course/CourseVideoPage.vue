@@ -11,12 +11,8 @@
             返回课程内容
           </RouterLink>
           <h1 class="h3 fw-bold mb-1">课程视频播放</h1>
-          <p class="text-secondary mb-0">课程 {{ courseId }} / 章节 {{ chapterId }}</p>
         </div>
 
-        <span class="badge text-bg-light border align-self-start align-self-lg-center">
-          视频 {{ videoId }}
-        </span>
       </div>
 
       <CourseVideoPlayer

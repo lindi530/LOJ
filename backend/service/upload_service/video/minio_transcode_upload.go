@@ -23,6 +23,9 @@ func uploadHLSFiles(ctx context.Context, bucket string, localDir string, objectP
 		if entry.IsDir() {
 			return nil
 		}
+		if isHLSKeyFile(entry.Name()) {
+			return nil
+		}
 
 		relativePath, err := filepath.Rel(localDir, localPath)
 		if err != nil {
@@ -31,6 +34,25 @@ func uploadHLSFiles(ctx context.Context, bucket string, localDir string, objectP
 		objectName := path.Join(objectPrefix, filepath.ToSlash(relativePath))
 
 		return uploadLocalFileToMinio(ctx, bucket, objectName, localPath, transcodedContentType(objectName))
+	})
+}
+
+func uploadHLSKeys(ctx context.Context, bucket string, localDir string, objectPrefix string) error {
+	return filepath.WalkDir(localDir, func(localPath string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() || entry.Name() != hlsKeyFileName {
+			return nil
+		}
+
+		relativePath, err := filepath.Rel(localDir, localPath)
+		if err != nil {
+			return err
+		}
+		objectName := path.Join(objectPrefix, filepath.ToSlash(relativePath))
+
+		return uploadLocalFileToMinio(ctx, bucket, objectName, localPath, "application/octet-stream")
 	})
 }
 
@@ -64,6 +86,10 @@ func uploadLocalFileToMinio(ctx context.Context, bucket string, objectName strin
 		miniogo.PutObjectOptions{ContentType: contentType},
 	)
 	return err
+}
+
+func isHLSKeyFile(filename string) bool {
+	return filename == hlsKeyFileName || filename == hlsKeyInfoFileName
 }
 
 func transcodedContentType(objectName string) string {

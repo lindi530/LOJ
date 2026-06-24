@@ -43,6 +43,25 @@ func videoCoverObjectPrefix() string {
 	return prefix
 }
 
+func videoHLSKeyObjectPrefix(videoAssetID int64) string {
+	return path.Join(videoHLSKeyRootPrefix(), strconv.FormatInt(videoAssetID, 10))
+}
+
+func videoHLSKeyRootPrefix() string {
+	prefix := cleanObjectPrefix(global.Config.Minio.Bucket.VideoPlayPath)
+	if prefix == "" {
+		return "hls-key"
+	}
+
+	base := path.Base(prefix)
+	dir := path.Dir(prefix)
+	keyBase := base + "-key"
+	if dir == "." {
+		return keyBase
+	}
+	return path.Join(dir, keyBase)
+}
+
 func videoAssetObjectPrefix(prefix string, videoAssetID int64) string {
 	return path.Join(prefix, strconv.FormatInt(videoAssetID, 10))
 }

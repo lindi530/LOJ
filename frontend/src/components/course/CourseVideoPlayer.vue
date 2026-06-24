@@ -32,7 +32,7 @@
         <div class="card-body p-4 p-lg-5">
           <i class="bi bi-camera-video-off display-5 text-secondary" aria-hidden="true"></i>
           <h2 class="h4 mt-3 mb-2">本章节暂无视频</h2>
-          <p class="text-secondary mb-4">后端没有返回可播放的视频路径。</p>
+          <p class="text-secondary mb-4">后端没有返回可播放的视频地址。</p>
           <RouterLink class="btn btn-primary" :to="{ name: 'CourseDetail', params: { course_id: courseId }, hash: '#content' }">
             返回课程内容
           </RouterLink>
@@ -43,69 +43,37 @@
 
   <section v-else class="card border-0 shadow-sm overflow-hidden">
     <div class="ratio ratio-16x9 bg-dark">
-      <video
-        v-if="currentSource"
-        ref="videoRef"
-        class="course-video-media"
-        :poster="video.poster || ''"
-        controls
-        playsinline
-        preload="metadata"
-      >
-        当前浏览器不支持视频播放。
-      </video>
-      <div v-else class="d-flex flex-column align-items-center justify-content-center gap-2 text-light">
-        <i class="bi bi-play-circle display-5" aria-hidden="true"></i>
-        <span>暂无可播放视频</span>
-      </div>
-    </div>
+      <div>
+        <video
+          ref="videoRef"
+          class="w-100 h-100 object-fit-contain bg-dark"
+          :poster="video.poster || ''"
+          controls
+          playsinline
+          preload="metadata"
+        >
+          当前浏览器不支持视频播放。
+        </video>
 
-    <div class="card-body p-3 p-lg-4">
-      <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
-        <div>
-          <span class="badge text-bg-primary mb-2">课程视频</span>
-          <h1 class="h4 fw-bold mb-2">{{ video.title || '章节视频' }}</h1>
-          <p class="text-secondary mb-0">
-            {{ video.description || '本章节视频' }}
-          </p>
-        </div>
-
-        <div class="d-flex flex-wrap align-content-start gap-2">
-          <span v-if="video.id" class="badge text-bg-light border">ID {{ video.id }}</span>
-          <span v-if="durationText" class="badge text-bg-light border">
-            <i class="bi bi-clock me-1" aria-hidden="true"></i>
-            {{ durationText }}
-          </span>
-          <span v-if="sizeText" class="badge text-bg-light border">
-            <i class="bi bi-hdd me-1" aria-hidden="true"></i>
-            {{ sizeText }}
-          </span>
-        </div>
-      </div>
-
-      <div
-        v-if="qualityOptions.length > 1"
-        class="d-flex flex-column flex-sm-row align-items-sm-center gap-2 mt-3"
-      >
-        <span class="small text-secondary">清晰度</span>
-        <div class="btn-group btn-group-sm" role="group" aria-label="视频清晰度">
-          <button
-            v-for="option in qualityOptions"
-            :key="option.value"
-            class="btn"
-            :class="selectedQuality === option.value ? 'btn-primary' : 'btn-outline-primary'"
-            type="button"
-            :disabled="selectedQuality === option.value"
-            @click="selectQuality(option.value)"
+        <div
+          v-if="qualityOptions.length > 1"
+          class="position-absolute top-0 end-0 z-1 m-2 m-sm-3"
+          @click.stop
+        >
+          <select
+            v-model="selectedQuality"
+            class="form-select form-select-sm w-auto bg-dark text-light border-secondary shadow-sm"
+            aria-label="视频清晰度"
           >
-            {{ option.label }}
-          </button>
+            <option
+              v-for="option in qualityOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
         </div>
-      </div>
-
-      <div v-if="currentSource" class="border rounded-3 bg-body-tertiary p-3 mt-3">
-        <div class="small text-secondary mb-1">当前播放路径</div>
-        <div class="text-break small">{{ currentSource }}</div>
       </div>
     </div>
   </section>
@@ -130,35 +98,34 @@ const props = defineProps({
   }
 })
 
+const qualityOrder = {
+  '480P': 1,
+  '720P': 2,
+  '1080P': 3
+}
+
 const loading = ref(false)
 const errorMessage = ref('')
 const video = ref(createEmptyVideo())
 const videoRef = ref(null)
 const selectedQuality = ref('')
 const apiBaseUrl = process.env.VUE_APP_API_BASE || 'http://localhost:8080'
-let HlsConstructor = null
+
 let hlsPlayer = null
+let HlsConstructor = null
+let loadRequestId = 0
 let sourceRequestId = 0
 
-const durationText = computed(() => formatDuration(video.value.duration))
 const qualityOptions = computed(() => video.value.profiles)
 const currentProfile = computed(() => (
   qualityOptions.value.find((profile) => profile.value === selectedQuality.value) || null
 ))
-const currentSource = computed(() => currentProfile.value?.source || video.value.source)
-const sizeText = computed(() => formatFileSize(currentProfile.value?.fileSize || video.value.sizeBytes))
+const currentSource = computed(() => currentProfile.value?.source || '')
 
 function createEmptyVideo() {
   return {
-    id: '',
-    title: '',
-    description: '',
-    origin_path: '',
-    source: '',
     poster: '',
-    profiles: [],
-    duration: 0,
-    sizeBytes: 0
+    profiles: []
   }
 }
 
@@ -174,26 +141,24 @@ function getApiOrigin() {
   return getAppOrigin()
 }
 
-function normalizeOriginPath(originPath) {
-  if (!originPath) {
+function resolveMediaUrl(mediaUrl) {
+  const normalizedMediaUrl = String(mediaUrl || '').trim()
+
+  if (!normalizedMediaUrl) {
     return ''
   }
 
-  const normalizedOriginPath = String(originPath).trim().replace(/\\/g, '/')
-
   if (
-    /^(https?:)?\/\//.test(normalizedOriginPath) ||
-    normalizedOriginPath.startsWith('data:') ||
-    normalizedOriginPath.startsWith('blob:')
+    /^(https?:)?\/\//.test(normalizedMediaUrl) ||
+    normalizedMediaUrl.startsWith('data:') ||
+    normalizedMediaUrl.startsWith('blob:')
   ) {
-    return normalizedOriginPath
+    return normalizedMediaUrl
   }
 
-  if (normalizedOriginPath.startsWith('/')) {
-    return new URL(normalizedOriginPath, getApiOrigin()).href
-  }
-
-  return new URL(`/${normalizedOriginPath}`, getApiOrigin()).href
+  return normalizedMediaUrl.startsWith('/')
+    ? new URL(normalizedMediaUrl, getApiOrigin()).href
+    : ''
 }
 
 function getResponseData(resp) {
@@ -210,44 +175,6 @@ function getResponseData(resp) {
   return body
 }
 
-function getVideoPayload(data) {
-  if (typeof data === 'string') {
-    return { origin_path: data }
-  }
-
-  if (data?.videoAsset && typeof data.videoAsset === 'object') {
-    return { ...data, ...data.videoAsset }
-  }
-
-  if (data?.video_asset && typeof data.video_asset === 'object') {
-    return { ...data, ...data.video_asset }
-  }
-
-  if (data?.video && typeof data.video === 'object') {
-    return { ...data, ...data.video }
-  }
-
-  return data || {}
-}
-
-function getProfileItems(payload) {
-  const profileData = payload.profiles || payload.video_profiles || payload.videoProfiles || payload.qualities
-
-  if (Array.isArray(profileData)) {
-    return profileData
-  }
-
-  if (profileData && typeof profileData === 'object') {
-    return Object.entries(profileData).map(([resolution, value]) => (
-      typeof value === 'string'
-        ? { resolution, playlist_path: value }
-        : { resolution, ...value }
-    ))
-  }
-
-  return []
-}
-
 function normalizeResolution(value) {
   const text = String(value || '').trim().toUpperCase()
   const match = text.match(/(480|720|1080)/)
@@ -255,59 +182,35 @@ function normalizeResolution(value) {
   return match ? `${match[1]}P` : text
 }
 
-function formatQualityLabel(profile) {
-  const resolution = normalizeResolution(profile.resolution || profile.quality || profile.label || profile.height)
+function formatQualityLabel(resolution) {
   const match = resolution.match(/(480|720|1080)P/)
 
-  return match ? `${match[1]}p` : resolution
-}
-
-function qualityRank(value) {
-  const resolution = normalizeResolution(value)
-
-  if (resolution === '480P') return 1
-  if (resolution === '720P') return 2
-  if (resolution === '1080P') return 3
-
-  return 0
+  return match ? `${match[1]}p` : resolution || '默认'
 }
 
 function normalizeProfiles(payload) {
+  const profiles = Array.isArray(payload?.profiles) ? payload.profiles : []
   const uniqueProfiles = new Map()
 
-  getProfileItems(payload).forEach((profile) => {
-    const sourcePath = (
-      profile.playlist_path ||
-      profile.playlistPath ||
-      profile.play_path ||
-      profile.playPath ||
-      profile.source ||
-      profile.url ||
-      profile.path ||
-      ''
-    )
-    const source = normalizeOriginPath(sourcePath)
+  profiles.forEach((profile) => {
+    const source = resolveMediaUrl(profile.play_url)
 
     if (!source) {
       return
     }
 
-    const resolution = normalizeResolution(profile.resolution || profile.quality || profile.label || profile.height)
+    const resolution = normalizeResolution(profile.resolution)
     const value = resolution || source
 
     uniqueProfiles.set(value, {
       value,
-      label: formatQualityLabel(profile),
       source,
-      fileSize: Number(profile.file_size ?? profile.fileSize ?? profile.size_bytes ?? profile.sizeBytes ?? 0),
-      bitrate: Number(profile.bitrate || 0),
-      width: Number(profile.width || 0),
-      height: Number(profile.height || 0)
+      label: formatQualityLabel(resolution)
     })
   })
 
   return [...uniqueProfiles.values()].sort((left, right) => (
-    qualityRank(left.value) - qualityRank(right.value)
+    (qualityOrder[left.value] || 0) - (qualityOrder[right.value] || 0)
   ))
 }
 
@@ -320,21 +223,11 @@ function getDefaultQuality(profiles) {
 }
 
 function normalizeVideo(data) {
-  const payload = getVideoPayload(data)
-  const originPath = payload.origin_path || payload.originPath || ''
-  const playPath = payload.play_path || payload.playPath || ''
-  const profiles = normalizeProfiles(payload)
+  const payload = data && typeof data === 'object' ? data : {}
 
   return {
-    id: payload.id ?? payload.video_id ?? payload.videoId ?? '',
-    title: payload.title || payload.name || `第 ${props.chapterId} 章视频`,
-    description: payload.description || '',
-    origin_path: originPath,
-    source: normalizeOriginPath(playPath || originPath),
-    poster: normalizeOriginPath(payload.poster || payload.coverPath || payload.cover_path || payload.coverUrl || payload.cover_url || ''),
-    profiles,
-    duration: Number(payload.duration ?? payload.durationSeconds ?? payload.duration_seconds ?? 0),
-    sizeBytes: Number(payload.sizeBytes ?? payload.size_bytes ?? payload.size ?? 0)
+    poster: resolveMediaUrl(payload.cover_url),
+    profiles: normalizeProfiles(payload)
   }
 }
 
@@ -349,6 +242,33 @@ function isHlsSource(source) {
   return /\.m3u8($|\?)/i.test(source)
 }
 
+function isHlsKeyRequest(requestUrl) {
+  const rawUrl = String(requestUrl || '').trim()
+
+  if (!rawUrl) {
+    return false
+  }
+
+  try {
+    const { pathname } = new URL(rawUrl, getAppOrigin())
+
+    return pathname.includes('/api/course/video/') && pathname.endsWith('/hls-key')
+  } catch {
+    return rawUrl.includes('/api/course/video/') && rawUrl.includes('/hls-key')
+  }
+}
+
+function attachHlsKeyAuthHeader(xhr, requestUrl) {
+  if (!isHlsKeyRequest(requestUrl)) {
+    return
+  }
+
+  const accessToken = localStorage.getItem('accessToken')
+  if (accessToken) {
+    xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`)
+  }
+}
+
 async function getHlsConstructor() {
   if (!HlsConstructor) {
     const hlsModule = await import('hls.js')
@@ -359,18 +279,22 @@ async function getHlsConstructor() {
   return HlsConstructor
 }
 
-function restorePlayback(videoElement, currentTime, shouldPlay) {
+function playSafely(videoElement) {
+  const playResult = videoElement.play()
+
+  if (playResult?.catch) {
+    playResult.catch(() => {})
+  }
+}
+
+function restorePlayback(videoElement, playbackTime, shouldPlay) {
   const restore = () => {
-    if (currentTime > 0) {
-      videoElement.currentTime = currentTime
+    if (playbackTime > 0) {
+      videoElement.currentTime = playbackTime
     }
 
     if (shouldPlay) {
-      const playResult = videoElement.play()
-
-      if (playResult?.catch) {
-        playResult.catch(() => {})
-      }
+      playSafely(videoElement)
     }
   }
 
@@ -397,8 +321,8 @@ async function applyVideoSource() {
     return
   }
 
-  const currentTime = videoElement.currentTime || 0
-  const shouldPlay = !videoElement.paused
+  const playbackTime = Number(videoElement.currentTime || 0)
+  const shouldPlay = !videoElement.paused && !videoElement.ended
 
   if (isHlsSource(source)) {
     const Hls = await getHlsConstructor()
@@ -408,11 +332,16 @@ async function applyVideoSource() {
     }
 
     if (Hls.isSupported()) {
-      hlsPlayer = new Hls()
+      hlsPlayer = new Hls({
+        xhrSetup(xhr, url) {
+          xhr.withCredentials = true
+          attachHlsKeyAuthHeader(xhr, url)
+        }
+      })
       hlsPlayer.loadSource(source)
       hlsPlayer.attachMedia(videoElement)
       hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-        restorePlayback(videoElement, currentTime, shouldPlay)
+        restorePlayback(videoElement, playbackTime, shouldPlay)
       })
       hlsPlayer.on(Hls.Events.ERROR, (_, data) => {
         if (data?.fatal) {
@@ -426,95 +355,61 @@ async function applyVideoSource() {
 
   videoElement.src = source
   videoElement.load()
-  restorePlayback(videoElement, currentTime, shouldPlay)
+  restorePlayback(videoElement, playbackTime, shouldPlay)
 }
 
-function selectQuality(quality) {
-  selectedQuality.value = quality
+function resetPlayer(nextErrorMessage = '') {
+  destroyHlsPlayer()
+  video.value = createEmptyVideo()
+  selectedQuality.value = ''
+  errorMessage.value = nextErrorMessage
 }
 
 async function loadVideo() {
+  const requestId = loadRequestId + 1
+  loadRequestId = requestId
+
   if (!props.courseId || !props.chapterId || !props.videoId) {
-    video.value = createEmptyVideo()
-    errorMessage.value = '课程、章节或视频参数缺失。'
+    loading.value = false
+    resetPlayer('课程、章节或视频参数缺失。')
     return
   }
 
-  let shouldApplySource = false
   loading.value = true
   errorMessage.value = ''
+  destroyHlsPlayer()
 
   try {
     const resp = await api.getCourseChapterVideo(props.courseId, props.chapterId, props.videoId)
+
+    if (requestId !== loadRequestId) {
+      return
+    }
+
     const nextVideo = normalizeVideo(getResponseData(resp))
 
-    selectedQuality.value = getDefaultQuality(nextVideo.profiles)
     video.value = nextVideo
-    shouldApplySource = Boolean(currentSource.value)
+    selectedQuality.value = getDefaultQuality(nextVideo.profiles)
   } catch (error) {
-    video.value = createEmptyVideo()
-    selectedQuality.value = ''
-    errorMessage.value = error?.response?.data?.message || error?.message || '视频信息加载失败，请稍后重试。'
+    if (requestId !== loadRequestId) {
+      return
+    }
+
+    resetPlayer(error?.response?.data?.message || error?.message || '视频信息加载失败，请稍后重试。')
   } finally {
-    loading.value = false
-    if (shouldApplySource) {
+    if (requestId === loadRequestId) {
+      loading.value = false
       await applyVideoSource()
     }
   }
 }
 
-function formatDuration(seconds) {
-  const totalSeconds = Number(seconds || 0)
-
-  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
-    return ''
-  }
-
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const restSeconds = Math.floor(totalSeconds % 60)
-  const paddedMinutes = hours > 0 ? String(minutes).padStart(2, '0') : String(minutes)
-  const paddedSeconds = String(restSeconds).padStart(2, '0')
-
-  return hours > 0
-    ? `${hours}:${paddedMinutes}:${paddedSeconds}`
-    : `${paddedMinutes}:${paddedSeconds}`
-}
-
-function formatFileSize(bytes) {
-  const value = Number(bytes || 0)
-
-  if (!Number.isFinite(value) || value <= 0) {
-    return ''
-  }
-
-  const units = ['B', 'KB', 'MB', 'GB']
-  let size = value
-  let unitIndex = 0
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex += 1
-  }
-
-  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
-}
-
 onMounted(loadVideo)
 watch(() => [props.courseId, props.chapterId, props.videoId], loadVideo)
-watch(currentSource, () => {
+watch(selectedQuality, () => {
   if (!loading.value) {
     applyVideoSource()
   }
 }, { flush: 'post' })
 onBeforeUnmount(destroyHlsPlayer)
 </script>
-
-<style scoped>
-.course-video-media {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background-color: var(--bs-dark);
-}
-</style>

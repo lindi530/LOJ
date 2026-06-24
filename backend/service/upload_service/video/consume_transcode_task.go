@@ -93,7 +93,7 @@ func processVideoTranscodeTask(ctx context.Context, task videoTranscodeTask) err
 	defer os.RemoveAll(workDir)
 
 	hlsDir := filepath.Join(workDir, "hls")
-	playlistPath, profiles, err := generateHLS(ctx, sourcePath, hlsDir)
+	playlistPath, profiles, err := generateHLS(ctx, sourcePath, hlsDir, task.VideoAssetID)
 	if err != nil {
 		return err
 	}
@@ -104,6 +104,9 @@ func processVideoTranscodeTask(ctx context.Context, task videoTranscodeTask) err
 	}
 
 	playObjectPrefix := videoAssetObjectPrefix(videoPlayObjectPrefix(), task.VideoAssetID)
+	if err := uploadHLSKeys(ctx, task.Bucket, hlsDir, videoHLSKeyObjectPrefix(task.VideoAssetID)); err != nil {
+		return err
+	}
 	if err := uploadHLSFiles(ctx, task.Bucket, hlsDir, playObjectPrefix); err != nil {
 		return err
 	}
