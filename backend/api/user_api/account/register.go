@@ -28,7 +28,12 @@ func (UserAccountAPI) Register(c *gin.Context) {
 		return
 	}
 	// 调用服务
-	result := service.Register(register)
+	result, err := service.Register(register)
+	if err != nil {
+		global.Logger.Error(fmt.Sprintf("register error: %v", err))
+		response.FailWithMessage("register failed", c)
+		return
+	}
 
 	// 返回响应
 	if !result {

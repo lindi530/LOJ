@@ -142,3 +142,32 @@ CREATE TABLE IF NOT EXISTS video_profile (
         resolution
     )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频资源存放表';
+
+CREATE TABLE IF NOT EXISTS course_orders (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_no VARCHAR(64) NOT NULL UNIQUE,
+    user_id BIGINT NOT NULL,
+    course_id BIGINT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    status TINYINT NOT NULL DEFAULT 0, -- 0待支付 1已支付 2取消 3退款 4过期
+    pay_channel VARCHAR(32),
+    transaction_id VARCHAR(128),
+    paid_at DATETIME NULL,
+    expire_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user_course (user_id, course_id),
+    INDEX idx_status_expire (status, expire_at)
+);
+
+CREATE TABLE IF NOT EXISTS course_enrollments (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    course_id BIGINT NOT NULL,
+    order_id BIGINT NULL,
+    status TINYINT NOT NULL DEFAULT 1, -- 1有效 2已失效/退款
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_course (user_id, course_id),
+    INDEX idx_course (course_id)
+);

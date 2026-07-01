@@ -1,7 +1,6 @@
 package course_api
 
 import (
-	"GO1/global"
 	"GO1/middlewares/response"
 	"GO1/models/course_model"
 	service_context "GO1/service/context"
@@ -10,9 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (CourseAPI) GetChapterVideo(c *gin.Context) {
-	var req course_model.GetChapterVideoReq
-
+func (CourseAPI) GetCourseAccess(c *gin.Context) {
+	var req course_model.GetCourseAccessReq
 	if err := c.ShouldBindUri(&req); err != nil {
 		response.FailWithCode(response.BadRequest, c)
 		return
@@ -24,10 +22,7 @@ func (CourseAPI) GetChapterVideo(c *gin.Context) {
 		return
 	}
 
-	resp := course_service.GetChapterVideo(userID, &req)
-
-	global.Logger.Info("respMessage: ", resp.Message)
-	global.Logger.Info("respData: ", resp.Data)
+	resp := course_service.CourseAccess(userID, &req)
 	if resp.Code == 1 {
 		response.FailWithMessage(resp.Message, c)
 		return

@@ -19,4 +19,5 @@ type Config struct {
 	Language    language.Language `mapstructure:"language"`
 	SqlFile     SqlFile           `mapstructure:"sql_file"`
 	Minio       Minio             `mapstructure:"minio"`
+	CoursePay   CoursePay         `mapstructure:"course_pay"`
 }

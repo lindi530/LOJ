@@ -18,6 +18,44 @@ type Course struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
+type CourseOrder struct {
+	ID            int64      `json:"id"`
+	OrderNo       string     `json:"orderNo"`
+	UserID        int64      `json:"userId"`
+	CourseID      int64      `json:"courseId"`
+	Amount        float64    `json:"amount"`
+	Status        int8       `json:"status"`
+	PayChannel    *string    `json:"payChannel"`
+	TransactionID *string    `json:"transactionId"`
+	PaidAt        *time.Time `json:"paidAt"`
+	ExpireAt      *time.Time `json:"expireAt"`
+	CreatedAt     time.Time  `json:"createdAt"`
+	UpdatedAt     time.Time  `json:"updatedAt"`
+}
+
+type CourseEnrollment struct {
+	ID        int64     `json:"id"`
+	UserID    int64     `json:"userId"`
+	CourseID  int64     `json:"courseId"`
+	OrderID   *int64    `json:"orderId"`
+	Status    int8      `json:"status"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+const (
+	CourseOrderStatusPending int8 = iota
+	CourseOrderStatusPaid
+	CourseOrderStatusCanceled
+	CourseOrderStatusRefunded
+	CourseOrderStatusExpired
+)
+
+const (
+	CourseEnrollmentStatusActive  int8 = 1
+	CourseEnrollmentStatusInvalid int8 = 2
+)
+
 type CourseChapter struct {
 	ID          int64     `json:"id"`
 	CourseID    int64     `json:"courseId"`

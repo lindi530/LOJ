@@ -6,7 +6,7 @@ import (
 	"GO1/models/course_model"
 )
 
-func ChapterList(req *course_model.GetChapterListReq) (resp response.Response) {
+func ChapterList(userID int64, req *course_model.GetChapterListReq) (resp response.Response) {
 	chapters, err := course_mysql.GetChapterList(req.CourseID)
 	if err != nil {
 		resp.Code = 1
@@ -14,6 +14,19 @@ func ChapterList(req *course_model.GetChapterListReq) (resp response.Response) {
 		return
 	}
 
-	resp.Data = chapters
+	hasAccess := false
+	if userID > 0 {
+		hasAccess, err = course_mysql.UserCanAccessCourse(userID, req.CourseID)
+		if err != nil {
+			resp.Code = 1
+			resp.Message = "query course access failed"
+			return
+		}
+	}
+
+	resp.Data = &course_model.GetChapterListResp{
+		List:      chapters,
+		HasAccess: hasAccess,
+	}
 	return
 }

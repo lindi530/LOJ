@@ -14,7 +14,7 @@ switch ($Action) {
     }
     "rebuild" {
         if ($Service) {
-            docker compose up -d --build --force-recreate $Service
+            docker compose up -d --build --force-recreate --no-deps $Service
         } else {
             docker compose up -d --build --force-recreate
         }

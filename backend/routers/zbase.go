@@ -73,4 +73,5 @@ func AddRouter(api *gin.RouterGroup) {
 	CalendarRouter(api)
 	CompetitionRouter(api)
 	CourseRouter(api)
+	OrderRouter(api)
 }

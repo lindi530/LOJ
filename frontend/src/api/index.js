@@ -104,6 +104,15 @@ export default {
   getCourseChapterVideo(course_id, chapter_id, video_id) {
     return request.get(`/course/${course_id}/chapter/${chapter_id}/${video_id}`)
   },
+  createCourseOrder(course_id) {
+    return request.post(`/course/${course_id}/order`)
+  },
+  getCourseAccess(course_id) {
+    return request.get(`/course/${course_id}/access`)
+  },
+  payCourseOrder(order_no) {
+    return request.post(`/order/${order_no}/pay`, { payType: 'coin' })
+  },
   courseCreate(data) {
     return request.post(`/course/create`, data)
   },
@@ -221,6 +230,9 @@ export default {
   },
   submitCompetitionProblem(competitionId, problemNumber, data) {
     return request.post(`/competition/${competitionId}/submit/${problemNumber}`, data)
+  },
+  getUserWalletBalance() {
+    return request.get('/users/wallet/balance')
   }
   // 这里按需继续扩展接口
 };

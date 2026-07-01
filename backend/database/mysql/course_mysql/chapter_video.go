@@ -34,19 +34,3 @@ func ChapterVideoExists(courseID, chapterID, videoID int64) (bool, error) {
 
 	return count > 0, err
 }
-
-func UserCanAccessVideoCourse(userID, videoID int64) (bool, error) {
-	if userID <= 0 {
-		return false, nil
-	}
-
-	// Replace this with enrollment table checks after course signup is persisted.
-	var count int64
-	err := global.DB.
-		Table("chapter_videos cv").
-		Joins("JOIN courses c ON c.id = cv.course_id").
-		Where("cv.video_id = ? AND (c.is_free = ? OR c.created_by = ?)", videoID, 1, userID).
-		Count(&count).Error
-
-	return count > 0, err
-}

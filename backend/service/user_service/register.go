@@ -5,12 +5,14 @@ import (
 	"GO1/models/user_model"
 )
 
-func Register(register user_model.ParamRegister) bool {
+func Register(register user_model.ParamRegister) (bool, error) {
 	result := user_mysql.CheckUser(user_mysql.UserNameParam(register.Name))
 
 	if result {
-		return false
+		return false, nil
 	}
-	user_mysql.Register(register)
-	return true
+	if err := user_mysql.Register(register); err != nil {
+		return false, err
+	}
+	return true, nil
 }

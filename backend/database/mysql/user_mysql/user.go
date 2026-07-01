@@ -7,17 +7,20 @@ import (
 	"GO1/pkg/snowflake"
 	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 )
 
-func Register(register user_model.ParamRegister) {
+func Register(register user_model.ParamRegister) error {
 
 	userId := snowflake.Snowflake{}.GenID()
 	hashPassword, err := password_hash.HashPassword(register.Password)
 
 	if err != nil {
 		global.Logger.Error(fmt.Sprintf("%s hash password error: %v", register.Name, err))
+		return err
 	}
-	time := time.Now()
+	now := time.Now()
 	user := user_model.User{
 		UserID:         userId,
 		UserName:       register.Name,
@@ -28,10 +31,20 @@ func Register(register user_model.ParamRegister) {
 		Avatar:         global.Config.Settings.User.Avatar,
 		FollowerCount:  0,
 		FollowingCount: 0,
-		CreateTime:     time,
-		UpdateTime:     time,
+		CreateTime:     now,
+		UpdateTime:     now,
 	}
-	global.DB.Create(&user)
+
+	if err := global.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&user).Error; err != nil {
+			return err
+		}
+		return EnsureUserWalletWithTx(tx, userId)
+	}); err != nil {
+		global.Logger.Error(fmt.Sprintf("%s register error: %v", register.Name, err))
+		return err
+	}
 
 	global.Logger.Info(user)
+	return nil
 }

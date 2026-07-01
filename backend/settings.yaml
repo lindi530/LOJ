@@ -99,6 +99,8 @@ language:
         need_compile: true
 rabbitmq:
     url: "amqp://guest:guest@localhost:5672/"
+course_pay:
+    callback_secret: "loj-course-pay-callback-secret"
 sql_file:
     path: "database/sql"
 minio:

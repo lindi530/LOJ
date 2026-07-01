@@ -24,6 +24,7 @@ func UsersRouter(router *gin.RouterGroup) {
 		users.DELETE("/:user_id", api.ApiGroups.UserAPI.UserAccountAPI.DeleteUser)
 
 		users.GET("/userlist", api.ApiGroups.UserAPI.GetUserList)
+		users.GET("/wallet/balance", api.ApiGroups.UserAPI.CheckUserWalletBalance)
 		users.POST("/posts/create", api.ApiGroups.UserAPI.CreateUserPost)
 		users.POST("/:user_id/modify_avatar", api.ApiGroups.UserAPI.ModifyAvatar)
 		users.PATCH("/:user_id/profile", api.ApiGroups.UserAPI.ModifyProfile)

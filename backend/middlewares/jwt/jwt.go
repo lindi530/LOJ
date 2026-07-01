@@ -1,12 +1,14 @@
 package jwt
 
 import (
+	"errors"
+	"strings"
+
 	"GO1/middlewares/response"
 	"GO1/pkg/jwt"
 	"GO1/service/context"
-	"errors"
+
 	"github.com/gin-gonic/gin"
-	"strings"
 )
 
 func JWTAuthMiddleware() gin.HandlerFunc {
@@ -30,7 +32,6 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// 将用户信息存入上下文 每个http都会存在一个独立的context，所以不会冲突
 		context.SetContext(c, context.CtxUserIdKey, claims.UserId)
 
 		c.Next()

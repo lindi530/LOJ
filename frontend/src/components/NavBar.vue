@@ -57,6 +57,7 @@
                 :render-icon="renderUserMenuIcon"
                 :render-label="renderUserMenuLabel"
                 @select="handleUserMenuSelect"
+                @update:show="handleUserMenuVisibleChange"
               >
               <button type="button" class="nav-link user-menu" aria-haspopup="menu">
                 <img :src="userAvatar" alt="Avatar" class="rounded-circle user-avatar">
@@ -85,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, computed, h } from 'vue'
+import { ref, computed, h, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { closeWebSocket } from '@/composables/useWebSocket'
@@ -102,18 +103,32 @@ const loginVisible = ref(false)
 const registerVisible = ref(false)
 const chatVisible = ref(false)
 const placement = ref('right')
+const walletBalance = ref(null)
 
 const refreshToken = computed(() => store.getters['user/refreshToken'] || localStorage.refreshToken)
 const isLogin = computed(() => store.getters['user/isLogin'])
 const userName = computed(() => store.getters['user/userName'])
 const userId = computed(() => store.getters['user/userId'])
 const userAvatar = computed(() => store.getters['user/userAvatar'] || '/default-avatar.svg')
-const userMenuOptions = computed(() => [
+const baseUserMenuOptions = [
   { label: '用户信息', key: 'profile', icon: 'bi bi-person' },
   { label: '设置', key: 'settings', icon: 'bi bi-gear' },
   { type: 'divider', key: 'divider' },
   { label: '登出', key: 'logout', icon: 'bi bi-box-arrow-right', danger: true }
-])
+]
+const userMenuOptions = computed(() => {
+  if (!isLogin.value || walletBalance.value === null) return baseUserMenuOptions
+
+  return [
+    {
+      label: `余额：${formatWalletBalance(walletBalance.value)}`,
+      key: 'walletBalance',
+      icon: 'bi bi-coin'
+    },
+    { type: 'divider', key: 'walletBalanceDivider' },
+    ...baseUserMenuOptions
+  ]
+})
 function userDropdownMenuProps() {
   return { class: 'loj-user-dropdown-menu' }
 }
@@ -141,6 +156,8 @@ function openChat() {
 
 function handleUserMenuSelect(key) {
   switch (key) {
+    case 'walletBalance':
+      break
     case 'profile':
       router.push(`/users/${userId.value}`)
       break
@@ -153,6 +170,38 @@ function handleUserMenuSelect(key) {
     default:
       break
   }
+}
+
+function handleUserMenuVisibleChange(show) {
+  if (show && isLogin.value) {
+    fetchWalletBalance()
+  }
+}
+
+async function fetchWalletBalance() {
+  walletBalance.value = null
+
+  try {
+    const resp = await api.getUserWalletBalance()
+
+    if (resp?.code === 0 && isLogin.value) {
+      const balance = Number(resp.data?.balance ?? 0)
+      walletBalance.value = Number.isFinite(balance) ? balance : 0
+    }
+  } catch (err) {
+    console.error('获取虚拟币余额失败：', err)
+  }
+}
+
+function formatWalletBalance(balance) {
+  return new Intl.NumberFormat('zh-CN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(balance)
+}
+
+function resetWalletBalanceState() {
+  walletBalance.value = null
 }
 
 function renderUserMenuIcon(option) {
@@ -185,6 +234,7 @@ async function logout() {
       store.commit('user/SET_REFRESHTOKEN', '')
       store.commit('user/SET_PROFILE', {})
       store.commit('user/LOGOUT')
+      resetWalletBalanceState()
       closeWebSocket()
     }
   } catch (err) {
@@ -195,6 +245,14 @@ async function logout() {
 function handleLoginSuccess() {
   loginVisible.value = false
 }
+
+watch(isLogin, (login) => {
+  if (!login) resetWalletBalanceState()
+})
+
+watch(userId, () => {
+  resetWalletBalanceState()
+})
 </script>
 
 <style scoped>

@@ -6,7 +6,19 @@ import (
 	"GO1/models/course_model"
 )
 
-func ChapterInfo(req *course_model.GetChapterInfoReq) (resp response.Response) {
+func ChapterInfo(userID int64, req *course_model.GetChapterInfoReq) (resp response.Response) {
+	canAccess, err := course_mysql.UserCanAccessCourse(userID, req.CourseID)
+	if err != nil {
+		resp.Code = 1
+		resp.Message = "query course access failed"
+		return
+	}
+	if !canAccess {
+		resp.Code = 1
+		resp.Message = "no course access"
+		return
+	}
+
 	problems, err := course_mysql.GetChapterProblems(req.CourseID, req.ChapterID)
 	if err != nil {
 		resp.Code = 1

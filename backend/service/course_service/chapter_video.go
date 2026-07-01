@@ -15,10 +15,22 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetChapterVideo(req *course_model.GetChapterVideoReq) (resp response.Response) {
+func GetChapterVideo(userID int64, req *course_model.GetChapterVideoReq) (resp response.Response) {
 	if req.VideoID <= 0 {
 		resp.Code = 1
 		resp.Message = "invalid video_id"
+		return
+	}
+
+	canAccess, err := course_mysql.UserCanAccessCourse(userID, req.CourseID)
+	if err != nil {
+		resp.Code = 1
+		resp.Message = "query course access failed"
+		return
+	}
+	if !canAccess {
+		resp.Code = 1
+		resp.Message = "no course access"
 		return
 	}
 

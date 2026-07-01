@@ -32,6 +32,10 @@
       </button>
     </div>
 
+    <div v-else-if="!hasCourseAccess" class="alert alert-warning mt-3 mb-0" role="alert">
+      您还没有购买该课程，购买后即可查看课程章节内容。
+    </div>
+
     <div v-else-if="chapters.length > 0" :id="accordionId" class="accordion">
       <div
         v-for="(chapter, index) in sortedChapters"
@@ -149,6 +153,7 @@ const props = defineProps({
 const chapters = ref([])
 const chaptersLoading = ref(false)
 const chaptersError = ref('')
+const hasCourseAccess = ref(false)
 const chapterDetails = reactive({})
 const emptyChapterDetail = {
   loading: false,
@@ -191,6 +196,19 @@ function normalizeChapterDetail(data) {
   }
 }
 
+function normalizeCourseAccess(data) {
+  if (Array.isArray(data)) {
+    return true
+  }
+
+  const accessValue = data?.hasAccess ?? data?.has_access
+  if (accessValue === undefined) {
+    return true
+  }
+
+  return Boolean(accessValue)
+}
+
 function resetChapterDetails() {
   Object.keys(chapterDetails).forEach((chapterId) => {
     delete chapterDetails[chapterId]
@@ -214,6 +232,7 @@ function chapterDetail(chapterId) {
 async function loadChapters() {
   if (!props.courseId) {
     chapters.value = []
+    hasCourseAccess.value = false
     return
   }
 
@@ -224,11 +243,19 @@ async function loadChapters() {
   try {
     const resp = await api.getCourseChapters(props.courseId)
     const data = resp?.data ?? resp
-    const list = Array.isArray(data) ? data : Array.isArray(data?.list) ? data.list : []
+    const list = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.list)
+        ? data.list
+        : Array.isArray(data?.chapters)
+          ? data.chapters
+          : []
 
+    hasCourseAccess.value = normalizeCourseAccess(data)
     chapters.value = list.map(normalizeChapter)
   } catch (error) {
     chapters.value = []
+    hasCourseAccess.value = false
     chaptersError.value = error?.response?.data?.message || error?.message || '章节列表加载失败，请稍后重试。'
   } finally {
     chaptersLoading.value = false
